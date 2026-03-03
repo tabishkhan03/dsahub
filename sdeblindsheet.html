@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Blind 75 Sheet</title>
+<style>
+  :root {
+    --bg: #06080f;
+    --surface: #0d1120;
+    --surface2: #141828;
+    --border: #1e2540;
+    --accent: #22d3ee;
+    --accent2: #38bdf8;
+    --text: #e0e8f8;
+    --muted: #5a6a90;
+    --done-bg: #051c20;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 1.3rem; font-weight: 700; }
+  header h1 span { color: var(--accent); }
+  .stat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 0.85rem; color: var(--muted); }
+  .stat-pill strong { color: var(--accent); }
+
+  .search-bar { padding: 20px 32px 0; }
+  .search-bar input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: var(--radius); font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  .filters { padding: 12px 32px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  main { padding: 20px 32px 60px; max-width: 1100px; margin: 0 auto; }
+
+  .category { margin-bottom: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .category-header { padding: 14px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; transition: background 0.2s; }
+  .category-header:hover { background: var(--surface2); }
+  .cat-icon { width: 30px; height: 30px; border-radius: 7px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .cat-title { font-weight: 600; font-size: 0.95rem; flex: 1; }
+  .cat-meta { display: flex; align-items: center; gap: 10px; }
+  .cat-progress { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .cat-arrow { color: var(--muted); transition: transform 0.25s; font-size: 0.75rem; }
+  .category.open .cat-arrow { transform: rotate(90deg); }
+  .progress-bar { width: 70px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
+  .category-body { display: none; border-top: 1px solid var(--border); }
+  .category.open .category-body { display: block; }
+
+  .problem-row { display: flex; align-items: center; gap: 14px; padding: 10px 20px; border-bottom: 1px solid #1e1e26; transition: background 0.15s; }
+  .problem-row:last-child { border-bottom: none; }
+  .problem-row:hover { background: #16161e; }
+  .problem-row.done { background: var(--done-bg); }
+  .problem-row.done .problem-name { text-decoration: line-through; color: var(--muted); }
+
+  .check-btn { width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .check-btn:hover { border-color: var(--accent); }
+  .check-btn.checked { background: var(--accent); border-color: var(--accent); }
+  .check-btn.checked::after { content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; }
+
+  .problem-name { flex: 1; font-size: 0.88rem; }
+
+  .lc-link { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: #051c20; border: 1px solid #0e4050; border-radius: 6px; color: #22d3ee; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .lc-link:hover { background: rgba(34,211,238,0.08); border-color: #22d3ee; }
+  .no-lc { color: var(--muted); font-size: 0.75rem; padding: 3px 10px; }
+
+  .no-results { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1rem; display: none; }
+  .no-results.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Blind <span>75</span></h1>
+  <div class="stat-pill">Completed: <strong id="done-count">0</strong> / <strong id="total-count">0</strong></div>
+</header>
+
+<div class="search-bar">
+  <input type="text" id="searchBox" placeholder="🔍  Search questions..." oninput="doSearch()"/>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('done',this)">✅ Done</button>
+  <button class="filter-btn" onclick="setFilter('pending',this)">⏳ Pending</button>
+  <button class="filter-btn" onclick="setFilter('lc',this)">🟡 Has LeetCode</button>
+</div>
+
+<main id="main">
+  <div class="no-results" id="no-results">No questions match your search.</div>
+</main>
+
+<script>
+const ICONS = ["📊","📈","🔢","🔗","🌿","🔄","🔍","🏔️","📚","💬","🌲","🌳","🗃️","📐","⚡","🧩"];
+const DATA = [
+  { id:"b75_array", name:"Array", problems:[
+    { id:"b1",  name:"Two Sum", lc:"https://leetcode.com/problems/two-sum/" },
+    { id:"b2",  name:"Best Time to Buy and Sell Stock", lc:"https://leetcode.com/problems/best-time-to-buy-and-sell-stock/" },
+    { id:"b3",  name:"Contains Duplicate", lc:"https://leetcode.com/problems/contains-duplicate/" },
+    { id:"b4",  name:"Product of Array Except Self", lc:"https://leetcode.com/problems/product-of-array-except-self/" },
+    { id:"b5",  name:"Maximum Subarray (Kadane's)", lc:"https://leetcode.com/problems/maximum-subarray/" },
+    { id:"b6",  name:"Maximum Product Subarray", lc:"https://leetcode.com/problems/maximum-product-subarray/" },
+    { id:"b7",  name:"Find Minimum in Rotated Sorted Array", lc:"https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" },
+    { id:"b8",  name:"Search in Rotated Sorted Array", lc:"https://leetcode.com/problems/search-in-rotated-sorted-array/" },
+    { id:"b9",  name:"3 Sum", lc:"https://leetcode.com/problems/3sum/" },
+    { id:"b10", name:"Container With Most Water", lc:"https://leetcode.com/problems/container-with-most-water/" }
+  ]},
+  { id:"b75_binary", name:"Binary", problems:[
+    { id:"b11", name:"Sum of Two Integers", lc:"https://leetcode.com/problems/sum-of-two-integers/" },
+    { id:"b12", name:"Number of 1 Bits", lc:"https://leetcode.com/problems/number-of-1-bits/" },
+    { id:"b13", name:"Counting Bits", lc:"https://leetcode.com/problems/counting-bits/" },
+    { id:"b14", name:"Missing Number", lc:"https://leetcode.com/problems/missing-number/" },
+    { id:"b15", name:"Reverse Bits", lc:"https://leetcode.com/problems/reverse-bits/" }
+  ]},
+  { id:"b75_dp", name:"Dynamic Programming", problems:[
+    { id:"b16", name:"Climbing Stairs", lc:"https://leetcode.com/problems/climbing-stairs/" },
+    { id:"b17", name:"Coin Change", lc:"https://leetcode.com/problems/coin-change/" },
+    { id:"b18", name:"Longest Increasing Subsequence", lc:"https://leetcode.com/problems/longest-increasing-subsequence/" },
+    { id:"b19", name:"Longest Common Subsequence", lc:"https://leetcode.com/problems/longest-common-subsequence/" },
+    { id:"b20", name:"Word Break Problem", lc:"https://leetcode.com/problems/word-break/" },
+    { id:"b21", name:"Combination Sum IV", lc:"https://leetcode.com/problems/combination-sum-iv/" },
+    { id:"b22", name:"House Robber", lc:"https://leetcode.com/problems/house-robber/" },
+    { id:"b23", name:"House Robber II", lc:"https://leetcode.com/problems/house-robber-ii/" },
+    { id:"b24", name:"Decode Ways", lc:"https://leetcode.com/problems/decode-ways/" },
+    { id:"b25", name:"Unique Paths", lc:"https://leetcode.com/problems/unique-paths/" },
+    { id:"b26", name:"Jump Game", lc:"https://leetcode.com/problems/jump-game/" }
+  ]},
+  { id:"b75_graph", name:"Graph", problems:[
+    { id:"b27", name:"Clone Graph", lc:"https://leetcode.com/problems/clone-graph/" },
+    { id:"b28", name:"Course Schedule", lc:"https://leetcode.com/problems/course-schedule/" },
+    { id:"b29", name:"Pacific Atlantic Water Flow", lc:"https://leetcode.com/problems/pacific-atlantic-water-flow/" },
+    { id:"b30", name:"Number of Islands", lc:"https://leetcode.com/problems/number-of-islands/" },
+    { id:"b31", name:"Longest Consecutive Sequence", lc:"https://leetcode.com/problems/longest-consecutive-sequence/" },
+    { id:"b32", name:"Alien Dictionary", lc:"https://leetcode.com/problems/alien-dictionary/" },
+    { id:"b33", name:"Graph Valid Tree", lc:"https://leetcode.com/problems/graph-valid-tree/" },
+    { id:"b34", name:"Number of Connected Components in an Undirected Graph", lc:"https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/" }
+  ]},
+  { id:"b75_interval", name:"Interval", problems:[
+    { id:"b35", name:"Insert Interval", lc:"https://leetcode.com/problems/insert-interval/" },
+    { id:"b36", name:"Merge Intervals", lc:"https://leetcode.com/problems/merge-intervals/" },
+    { id:"b37", name:"Non-overlapping Intervals", lc:"https://leetcode.com/problems/non-overlapping-intervals/" },
+    { id:"b38", name:"Meeting Rooms", lc:"https://leetcode.com/problems/meeting-rooms/" },
+    { id:"b39", name:"Meeting Rooms II", lc:"https://leetcode.com/problems/meeting-rooms-ii/" }
+  ]},
+  { id:"b75_linkedlist", name:"Linked List", problems:[
+    { id:"b40", name:"Reverse a Linked List", lc:"https://leetcode.com/problems/reverse-linked-list/" },
+    { id:"b41", name:"Detect Cycle in a Linked List", lc:"https://leetcode.com/problems/linked-list-cycle/" },
+    { id:"b42", name:"Merge Two Sorted Lists", lc:"https://leetcode.com/problems/merge-two-sorted-lists/" },
+    { id:"b43", name:"Merge K Sorted Lists", lc:"https://leetcode.com/problems/merge-k-sorted-lists/" },
+    { id:"b44", name:"Remove Nth Node From End of List", lc:"https://leetcode.com/problems/remove-nth-node-from-end-of-list/" },
+    { id:"b45", name:"Reorder List", lc:"https://leetcode.com/problems/reorder-list/" }
+  ]},
+  { id:"b75_matrix", name:"Matrix", problems:[
+    { id:"b46", name:"Set Matrix Zeroes", lc:"https://leetcode.com/problems/set-matrix-zeroes/" },
+    { id:"b47", name:"Spiral Matrix", lc:"https://leetcode.com/problems/spiral-matrix/" },
+    { id:"b48", name:"Rotate Image", lc:"https://leetcode.com/problems/rotate-image/" },
+    { id:"b49", name:"Word Search", lc:"https://leetcode.com/problems/word-search/" }
+  ]},
+  { id:"b75_string", name:"String", problems:[
+    { id:"b50", name:"Longest Substring Without Repeating Characters", lc:"https://leetcode.com/problems/longest-substring-without-repeating-characters/" },
+    { id:"b51", name:"Longest Repeating Character Replacement", lc:"https://leetcode.com/problems/longest-repeating-character-replacement/" },
+    { id:"b52", name:"Minimum Window Substring", lc:"https://leetcode.com/problems/minimum-window-substring/" },
+    { id:"b53", name:"Valid Anagram", lc:"https://leetcode.com/problems/valid-anagram/" },
+    { id:"b54", name:"Group Anagrams", lc:"https://leetcode.com/problems/group-anagrams/" },
+    { id:"b55", name:"Valid Parentheses", lc:"https://leetcode.com/problems/valid-parentheses/" },
+    { id:"b56", name:"Valid Palindrome", lc:"https://leetcode.com/problems/valid-palindrome/" },
+    { id:"b57", name:"Longest Palindromic Substring", lc:"https://leetcode.com/problems/longest-palindromic-substring/" },
+    { id:"b58", name:"Palindromic Substrings", lc:"https://leetcode.com/problems/palindromic-substrings/" },
+    { id:"b59", name:"Encode and Decode Strings", lc:"https://leetcode.com/problems/encode-and-decode-strings/" }
+  ]},
+  { id:"b75_tree", name:"Tree", problems:[
+    { id:"b60", name:"Maximum Depth of Binary Tree", lc:"https://leetcode.com/problems/maximum-depth-of-binary-tree/" },
+    { id:"b61", name:"Same Tree", lc:"https://leetcode.com/problems/same-tree/" },
+    { id:"b62", name:"Invert / Flip Binary Tree", lc:"https://leetcode.com/problems/invert-binary-tree/" },
+    { id:"b63", name:"Binary Tree Maximum Path Sum", lc:"https://leetcode.com/problems/binary-tree-maximum-path-sum/" },
+    { id:"b64", name:"Binary Tree Level Order Traversal", lc:"https://leetcode.com/problems/binary-tree-level-order-traversal/" },
+    { id:"b65", name:"Serialize and Deserialize Binary Tree", lc:"https://leetcode.com/problems/serialize-and-deserialize-binary-tree/" },
+    { id:"b66", name:"Subtree of Another Tree", lc:"https://leetcode.com/problems/subtree-of-another-tree/" },
+    { id:"b67", name:"Construct Binary Tree from Preorder and Inorder", lc:"https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/" },
+    { id:"b68", name:"Validate Binary Search Tree", lc:"https://leetcode.com/problems/validate-binary-search-tree/" },
+    { id:"b69", name:"Kth Smallest Element in a BST", lc:"https://leetcode.com/problems/kth-smallest-element-in-a-bst/" },
+    { id:"b70", name:"Lowest Common Ancestor of BST", lc:"https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/" },
+    { id:"b71", name:"Implement Trie (Prefix Tree)", lc:"https://leetcode.com/problems/implement-trie-prefix-tree/" },
+    { id:"b72", name:"Design Add and Search Words Data Structure", lc:"https://leetcode.com/problems/design-add-and-search-words-data-structure/" },
+    { id:"b73", name:"Word Search II", lc:"https://leetcode.com/problems/word-search-ii/" }
+  ]},
+  { id:"b75_heap", name:"Heap", problems:[
+    { id:"b74", name:"Top K Frequent Elements", lc:"https://leetcode.com/problems/top-k-frequent-elements/" },
+    { id:"b75", name:"Find Median from Data Stream", lc:"https://leetcode.com/problems/find-median-from-data-stream/" }
+  ]}
+];
+
+let activeFilter = 'all', searchTerm = '';
+const KEY_PREFIX = 'blind75_done_';
+function isDone(id) { return localStorage.getItem(KEY_PREFIX+id)==='1'; }
+function setDone(id,v) { v ? localStorage.setItem(KEY_PREFIX+id,'1') : localStorage.removeItem(KEY_PREFIX+id); }
+
+function buildUI() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  let total=0, done=0;
+  DATA.forEach((cat,ci) => {
+    let ct=0, cd=0;
+    cat.problems.forEach(p=>{ ct++; total++; if(isDone(p.id)){cd++;done++;} });
+    const el = document.createElement('div');
+    el.className='category'; el.id='cat-'+cat.id;
+    const header = document.createElement('div');
+    header.className='category-header';
+    header.innerHTML=`
+      <div class="cat-icon">${ICONS[ci%ICONS.length]}</div>
+      <div class="cat-title">${ci+1}. ${cat.name}</div>
+      <div class="cat-meta">
+        <span class="cat-progress" id="cprog-${cat.id}">${cd}/${ct}</span>
+        <div class="progress-bar"><div class="progress-fill" id="pfill-${cat.id}" style="width:${ct?Math.round(cd/ct*100):0}%"></div></div>
+        <span class="cat-arrow">▶</span>
+      </div>`;
+    header.onclick=()=>el.classList.toggle('open');
+    const body = document.createElement('div');
+    body.className='category-body';
+    cat.problems.forEach(p=>{
+      const row=document.createElement('div');
+      row.className='problem-row'+(isDone(p.id)?' done':'');
+      row.id='row-'+p.id; row.dataset.name=p.name.toLowerCase(); row.dataset.haslc=p.lc?'1':'0';
+      const check=document.createElement('div');
+      check.className='check-btn'+(isDone(p.id)?' checked':'');
+      check.onclick=e=>{e.stopPropagation();toggleDone(p.id,cat.id);};
+      const name=document.createElement('span');
+      name.className='problem-name'; name.textContent=p.name;
+      const lc=p.lc
+        ? Object.assign(document.createElement('a'),{href:p.lc,target:'_blank',rel:'noopener',className:'lc-link',innerHTML:'🟡 LeetCode'})
+        : Object.assign(document.createElement('span'),{className:'no-lc',textContent:'—'});
+      row.appendChild(check); row.appendChild(name); row.appendChild(lc);
+      body.appendChild(row);
+    });
+    el.appendChild(header); el.appendChild(body);
+    main.appendChild(el);
+  });
+  document.getElementById('total-count').textContent=total;
+  document.getElementById('done-count').textContent=done;
+  applyFilter();
+}
+
+function toggleDone(id,catId) {
+  const was=isDone(id); setDone(id,!was);
+  const row=document.getElementById('row-'+id);
+  const check=row.querySelector('.check-btn');
+  if(!was){row.classList.add('done');check.classList.add('checked');}
+  else{row.classList.remove('done');check.classList.remove('checked');}
+  updateCounts(); applyFilter();
+}
+
+function updateCounts() {
+  let total=0,done=0;
+  DATA.forEach(cat=>{
+    let ct=0,cd=0;
+    cat.problems.forEach(p=>{ct++;total++;if(isDone(p.id)){cd++;done++;}});
+    const fill=document.getElementById('pfill-'+cat.id);
+    if(fill) fill.style.width=(ct?Math.round(cd/ct*100):0)+'%';
+    const prog=document.getElementById('cprog-'+cat.id);
+    if(prog) prog.textContent=cd+'/'+ct;
+  });
+  document.getElementById('total-count').textContent=total;
+  document.getElementById('done-count').textContent=done;
+}
+
+function setFilter(f,btn) {
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); applyFilter();
+}
+
+function doSearch() { searchTerm=document.getElementById('searchBox').value.toLowerCase().trim(); applyFilter(); }
+
+function applyFilter() {
+  let any=false;
+  document.querySelectorAll('.problem-row').forEach(row=>{
+    const nm=row.dataset.name||'', lc=row.dataset.haslc==='1', dn=row.classList.contains('done');
+    let show=true;
+    if(searchTerm && !nm.includes(searchTerm)) show=false;
+    if(activeFilter==='done' && !dn) show=false;
+    if(activeFilter==='pending' && dn) show=false;
+    if(activeFilter==='lc' && !lc) show=false;
+    row.style.display=show?'':'none';
+    if(show) any=true;
+  });
+  document.getElementById('no-results').classList.toggle('show',!any&&(searchTerm||activeFilter!=='all'));
+}
+
+buildUI();
+</script>
+</body>
+</html>

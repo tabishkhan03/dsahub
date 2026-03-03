@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>A2Z DSA Sheet</title>
+<style>
+  :root {
+    --bg: #06080f;
+    --surface: #0d1120;
+    --surface2: #141828;
+    --border: #1e2540;
+    --accent: #22d3ee;
+    --accent2: #38bdf8;
+    --text: #e0e8f8;
+    --muted: #5a6a90;
+    --easy: #22c55e;
+    --medium: #f59e0b;
+    --hard: #ef4444;
+    --done-bg: #051c20;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* Header */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+  header h1 { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+  header h1 span { color: var(--accent); }
+  .stats { display: flex; gap: 20px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+  .stat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; }
+  .stat-pill strong { color: var(--accent); }
+
+  /* Search */
+  .search-bar { padding: 20px 32px 0; }
+  .search-bar input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: var(--radius); font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  /* Filters */
+  .filters { padding: 12px 32px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  /* Main content */
+  main { padding: 20px 32px 60px; max-width: 1200px; margin: 0 auto; }
+
+  /* Category block */
+  .category { margin-bottom: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .category-header { padding: 14px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; transition: background 0.2s; }
+  .category-header:hover { background: var(--surface2); }
+  .cat-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+  .cat-title { font-weight: 600; font-size: 1rem; flex: 1; }
+  .cat-progress { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .cat-arrow { color: var(--muted); transition: transform 0.25s; font-size: 0.8rem; }
+  .category.open .cat-arrow { transform: rotate(90deg); }
+  .category-body { display: none; border-top: 1px solid var(--border); }
+  .category.open .category-body { display: block; }
+
+  /* Subcategory */
+  .subcategory { border-bottom: 1px solid var(--border); }
+  .subcategory:last-child { border-bottom: none; }
+  .subcat-header { padding: 10px 20px 10px 52px; display: flex; align-items: center; gap: 10px; cursor: pointer; background: var(--surface2); user-select: none; transition: background 0.2s; }
+  .subcat-header:hover { filter: brightness(1.1); }
+  .subcat-title { font-size: 0.88rem; font-weight: 500; color: var(--muted); flex: 1; }
+  .subcat-count { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+  .subcat-arrow { color: var(--muted); transition: transform 0.25s; font-size: 0.72rem; }
+  .subcategory.open .subcat-arrow { transform: rotate(90deg); }
+  .problem-list { display: none; }
+  .subcategory.open .problem-list { display: block; }
+
+  /* Problem row */
+  .problem-row { display: flex; align-items: center; gap: 14px; padding: 10px 20px 10px 52px; border-bottom: 1px solid #1e1e26; transition: background 0.15s; }
+  .problem-row:last-child { border-bottom: none; }
+  .problem-row:hover { background: #080e1c; }
+  .problem-row.done { background: var(--done-bg); }
+  .problem-row.done .problem-name { text-decoration: line-through; color: var(--muted); }
+
+  /* Checkbox */
+  .check-btn { width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .check-btn:hover { border-color: var(--accent); }
+  .check-btn.checked { background: var(--accent); border-color: var(--accent); }
+  .check-btn.checked::after { content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; }
+
+  /* Problem name */
+  .problem-name { flex: 1; font-size: 0.88rem; color: var(--text); }
+
+  /* LeetCode badge */
+  .lc-link { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: #051c20; border: 1px solid #0e4050; border-radius: 6px; color: #22d3ee; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .lc-link:hover { background: rgba(34,211,238,0.08); border-color: #22d3ee; }
+  .no-lc { color: var(--muted); font-size: 0.75rem; padding: 3px 10px; }
+
+  /* Progress bar */
+  .progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* Empty search */
+  .no-results { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1rem; display: none; }
+  .no-results.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>A2Z <span>DSA</span> Sheet</h1>
+  <div class="stats">
+    <div class="stat-pill">Completed: <strong id="done-count">0</strong> / <strong id="total-count">0</strong></div>
+  </div>
+</header>
+
+<div class="search-bar">
+  <input type="text" id="searchBox" placeholder="🔍  Search questions..." oninput="doSearch()"/>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+  <button class="filter-btn" onclick="setFilter('done', this)">✅ Done</button>
+  <button class="filter-btn" onclick="setFilter('pending', this)">⏳ Pending</button>
+  <button class="filter-btn" onclick="setFilter('lc', this)">🟡 Has LeetCode</button>
+</div>
+
+<main id="main">
+<div class="no-results" id="no-results">No questions match your search.</div>
+</main>
+
+<script>
+const DATA = [
+  {
+    id: "683", name: "Learn the basics", icon: "📘",
+    subcategories: [
+      { id: "499", name: "Things to Know in C++/Java/Python or any language", problems: [
+        { id: "425", name: "Input Output", lc: null },
+        { id: "1211", name: "Cpp Basics", lc: null },
+        { id: "424", name: "If ElseIf", lc: null },
+        { id: "429", name: "Switch Case", lc: null },
+        { id: "2869", name: "What are arrays, strings?", lc: null },
+        { id: "2867", name: "For loops", lc: null },
+        { id: "2868", name: "While loops", lc: null },
+        { id: "2866", name: "Functions (Pass by Reference and Value)", lc: null },
+        { id: "1219", name: "Theory with examples", lc: null }
+      ]},
+      { id: "494", name: "Build-up Logical Thinking", problems: [
+        { id: "1216", name: "Easy and Medium", lc: null }
+      ]},
+      { id: "498", name: "Learn STL/Java-Collections or similar thing in your language", problems: [
+        { id: "1218", name: "STL", lc: null },
+        { id: "1217", name: "Java Collections", lc: null }
+      ]},
+      { id: "495", name: "Know Basic Maths", problems: [
+        { id: "367", name: "Count all Digits of a Number", lc: null },
+        { id: "376", name: "Reverse a number", lc: "https://leetcode.com/problems/reverse-integer/" },
+        { id: "374", name: "Palindrome Number", lc: "https://leetcode.com/problems/palindrome-number/" },
+        { id: "372", name: "GCD of Two Numbers", lc: null },
+        { id: "366", name: "Check if the Number is Armstrong", lc: "https://leetcode.com/problems/armstrong-number/" },
+        { id: "2807", name: "Print all Divisors", lc: null },
+        { id: "365", name: "Check for Prime Number", lc: null }
+      ]},
+      { id: "497", name: "Learn Basic Recursion", problems: [
+        { id: "2401", name: "Understand recursion by print something N times", lc: null },
+        { id: "2405", name: "Print name N times using recursion", lc: null },
+        { id: "850", name: "Print 1 to N using Recursion", lc: null },
+        { id: "852", name: "Print N to 1 using Recursion", lc: null },
+        { id: "386", name: "Sum of First N Numbers", lc: null },
+        { id: "371", name: "Factorial of a given number", lc: null },
+        { id: "342", name: "Reverse an array", lc: null },
+        { id: "378", name: "Check if String is Palindrome or Not", lc: "https://leetcode.com/problems/valid-palindrome/" },
+        { id: "381", name: "Fibonacci Number", lc: "https://leetcode.com/problems/fibonacci-number/" }
+      ]},
+      { id: "496", name: "Learn Basic Hashing", problems: [
+        { id: "1203", name: "Basic Hashing", lc: null },
+        { id: "252", name: "Counting Frequencies of Array Elements", lc: null },
+        { id: "344", name: "Highest Occurring Element in an Array", lc: "https://leetcode.com/problems/frequency-of-the-most-frequent-element/" }
+      ]}
+    ]
+  },
+  {
+    id: "681", name: "Learn Important Sorting Techniques", icon: "🔢",
+    subcategories: [
+      { id: "487", name: "Sorting-I", problems: [
+        { id: "947", name: "Selection Sort", lc: null },
+        { id: "943", name: "Bubble Sort", lc: null },
+        { id: "944", name: "Insertion Sorting", lc: null }
+      ]},
+      { id: "488", name: "Sorting-II", problems: [
+        { id: "945", name: "Merge Sorting", lc: null },
+        { id: "881", name: "Recursive Bubble Sort", lc: null },
+        { id: "882", name: "Recursive Insertion Sort", lc: null },
+        { id: "946", name: "Quick Sorting", lc: null }
+      ]}
+    ]
+  },
+  {
+    id: "686", name: "Solve Problems on Arrays [Easy → Medium → Hard]", icon: "📊",
+    subcategories: [
+      { id: "505", name: "Easy", problems: [
+        { id: "38", name: "Largest Element", lc: null },
+        { id: "43", name: "Second Largest Element", lc: null },
+        { id: "379", name: "Check if the Array is Sorted II", lc: "https://leetcode.com/problems/check-if-array-is-sorted-and-rotated/" },
+        { id: "2764", name: "Remove duplicates from Sorted array", lc: "https://leetcode.com/problems/remove-duplicates-from-sorted-array/" },
+        { id: "40", name: "Left Rotate Array by One", lc: "https://leetcode.com/problems/rotate-array/" },
+        { id: "39", name: "Left Rotate Array by K Places", lc: "https://leetcode.com/problems/rotate-array/" },
+        { id: "46", name: "Move Zeros to End", lc: "https://leetcode.com/problems/move-zeroes/" },
+        { id: "41", name: "Linear Search", lc: null },
+        { id: "48", name: "Union of two sorted arrays", lc: null },
+        { id: "44", name: "Find missing number", lc: null },
+        { id: "42", name: "Maximum Consecutive Ones", lc: "https://leetcode.com/problems/max-consecutive-ones/" },
+        { id: "2793", name: "Find the number that appears once, and other numbers twice.", lc: "https://leetcode.com/problems/single-number/" },
+        { id: "2836", name: "Longest subarray with given sum K(positives)", lc: null },
+        { id: "564", name: "Longest subarray with sum K", lc: null }
+      ]},
+      { id: "507", name: "Medium", problems: [
+        { id: "37", name: "Two Sum", lc: "https://leetcode.com/problems/two-sum/" },
+        { id: "2762", name: "Sort an array of 0's 1's and 2's", lc: "https://leetcode.com/problems/sort-colors/" },
+        { id: "22", name: "Majority Element-I", lc: "https://leetcode.com/problems/majority-element/" },
+        { id: "2760", name: "Kadane's Algorithm, maximum subarray sum", lc: "https://leetcode.com/problems/maximum-subarray/" },
+        { id: "2761", name: "Print subarray with maximum subarray sum (extended version of above problem)", lc: null },
+        { id: "2798", name: "Stock Buy and Sell", lc: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/" },
+        { id: "34", name: "Rearrange array elements by sign", lc: "https://leetcode.com/problems/rearrange-array-elements-by-sign/" },
+        { id: "31", name: "Next Permutation", lc: "https://leetcode.com/problems/next-permutation/" },
+        { id: "30", name: "Leaders in an Array", lc: null },
+        { id: "2835", name: "Longest Consecutive Sequence in an Array", lc: "https://leetcode.com/problems/longest-consecutive-sequence/" },
+        { id: "911", name: "Set Matrix Zeroes", lc: "https://leetcode.com/problems/set-matrix-zeroes/" },
+        { id: "35", name: "Rotate matrix by 90 degrees", lc: "https://leetcode.com/problems/rotate-image/" },
+        { id: "33", name: "Print the matrix in spiral manner", lc: "https://leetcode.com/problems/spiral-matrix/" },
+        { id: "561", name: "Count subarrays with given sum", lc: "https://leetcode.com/problems/subarray-sum-equals-k/" }
+      ]},
+      { id: "506", name: "Hard", problems: [
+        { id: "813", name: "Pascal's Triangle I", lc: "https://leetcode.com/problems/pascals-triangle/" },
+        { id: "23", name: "Majority Element-II", lc: "https://leetcode.com/problems/majority-element-ii/" },
+        { id: "27", name: "3 Sum", lc: "https://leetcode.com/problems/3sum/" },
+        { id: "28", name: "4 Sum", lc: "https://leetcode.com/problems/4sum/" },
+        { id: "605", name: "Largest Subarray with Sum 0", lc: null },
+        { id: "562", name: "Count subarrays with given xor K", lc: null },
+        { id: "715", name: "Merge Overlapping Subintervals", lc: "https://leetcode.com/problems/merge-intervals/" },
+        { id: "25", name: "Merge two sorted arrays without extra space", lc: "https://leetcode.com/problems/merge-sorted-array/" },
+        { id: "21", name: "Find the repeating and missing number", lc: null },
+        { id: "20", name: "Count Inversions", lc: null },
+        { id: "26", name: "Reverse Pairs", lc: "https://leetcode.com/problems/reverse-pairs/" },
+        { id: "24", name: "Maximum Product Subarray in an Array", lc: "https://leetcode.com/problems/maximum-product-subarray/" }
+      ]}
+    ]
+  },
+  {
+    id: "673", name: "Binary Search [1D, 2D Arrays, Search Space]", icon: "🔍",
+    subcategories: [
+      { id: "456", name: "BS on 1D Arrays", problems: [
+        { id: "81", name: "Search X in sorted array", lc: "https://leetcode.com/problems/binary-search/" },
+        { id: "80", name: "Lower Bound", lc: null },
+        { id: "82", name: "Upper Bound", lc: null },
+        { id: "89", name: "Search insert position", lc: "https://leetcode.com/problems/search-insert-position/" },
+        { id: "86", name: "Floor and Ceil in Sorted Array", lc: null },
+        { id: "85", name: "First and last occurrence", lc: "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/" },
+        { id: "229", name: "Count Occurrences in a Sorted Array", lc: null },
+        { id: "87", name: "Search in rotated sorted array-I", lc: "https://leetcode.com/problems/search-in-rotated-sorted-array/" },
+        { id: "88", name: "Search in rotated sorted array-II", lc: "https://leetcode.com/problems/search-in-rotated-sorted-array-ii/" },
+        { id: "83", name: "Find minimum in Rotated Sorted Array", lc: "https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" },
+        { id: "84", name: "Find out how many times the array is rotated", lc: null },
+        { id: "2770", name: "Single element in a Sorted Array", lc: "https://leetcode.com/problems/single-element-in-a-sorted-array/" },
+        { id: "75", name: "Find peak element", lc: "https://leetcode.com/problems/find-peak-element/" }
+      ]},
+      { id: "458", name: "BS on Answers", problems: [
+        { id: "92", name: "Find square root of a number", lc: null },
+        { id: "91", name: "Find Nth root of a number", lc: null },
+        { id: "94", name: "Koko eating bananas", lc: "https://leetcode.com/problems/koko-eating-bananas/" },
+        { id: "95", name: "Minimum days to make M bouquets", lc: "https://leetcode.com/problems/minimum-number-of-days-to-make-m-bouquets/" },
+        { id: "93", name: "Find the smallest divisor", lc: "https://leetcode.com/problems/find-the-smallest-divisor-given-a-threshold/" },
+        { id: "161", name: "Capacity to Ship Packages Within D Days", lc: "https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/" },
+        { id: "600", name: "Kth Missing Positive Number", lc: "https://leetcode.com/problems/kth-missing-positive-number/" },
+        { id: "73", name: "Aggressive Cows", lc: null },
+        { id: "74", name: "Book Allocation Problem", lc: null },
+        { id: "79", name: "Split array - largest sum", lc: "https://leetcode.com/problems/split-array-largest-sum/" },
+        { id: "805", name: "Painter's Partition", lc: null },
+        { id: "78", name: "Minimize Max Distance to Gas Station", lc: "https://leetcode.com/problems/minimize-max-distance-to-gas-station/" },
+        { id: "77", name: "Median of 2 sorted arrays", lc: "https://leetcode.com/problems/median-of-two-sorted-arrays/" },
+        { id: "2767", name: "Kth element of 2 sorted arrays", lc: null }
+      ]},
+      { id: "457", name: "BS on 2D Arrays", problems: [
+        { id: "66", name: "Find row with maximum 1's", lc: null },
+        { id: "69", name: "Search in a 2D matrix", lc: "https://leetcode.com/problems/search-a-2d-matrix/" },
+        { id: "68", name: "Search in 2D matrix - II", lc: "https://leetcode.com/problems/search-a-2d-matrix-ii/" },
+        { id: "65", name: "Find Peak Element - II", lc: "https://leetcode.com/problems/find-a-peak-element-ii/" },
+        { id: "67", name: "Matrix Median", lc: null }
+      ]}
+    ]
+  },
+  {
+    id: "689", name: "Strings [Basic and Medium]", icon: "🔤",
+    subcategories: [
+      { id: "512", name: "Basic and Easy String Problems", problems: [
+        { id: "892", name: "Remove Outermost Parentheses", lc: "https://leetcode.com/problems/remove-outermost-parentheses/" },
+        { id: "2863", name: "Reverse words in a given string / Palindrome Check", lc: "https://leetcode.com/problems/reverse-words-in-a-string/" },
+        { id: "394", name: "Largest Odd Number in a String", lc: "https://leetcode.com/problems/largest-odd-number-in-string/" },
+        { id: "395", name: "Longest Common Prefix", lc: "https://leetcode.com/problems/longest-common-prefix/" },
+        { id: "393", name: "Isomorphic String", lc: "https://leetcode.com/problems/isomorphic-strings/" },
+        { id: "398", name: "Rotate String", lc: "https://leetcode.com/problems/rotate-string/" },
+        { id: "2809", name: "Check if two strings are anagram of each other", lc: "https://leetcode.com/problems/valid-anagram/" }
+      ]},
+      { id: "513", name: "Medium String Problems", problems: [
+        { id: "399", name: "Sort Characters by Frequency", lc: "https://leetcode.com/problems/sort-characters-by-frequency/" },
+        { id: "674", name: "Maximum Nesting Depth of the Parentheses", lc: "https://leetcode.com/problems/maximum-nesting-depth-of-the-parentheses/" },
+        { id: "903", name: "Roman to Integer", lc: "https://leetcode.com/problems/roman-to-integer/" },
+        { id: "974", name: "String to Integer (atoi)", lc: "https://leetcode.com/problems/string-to-integer-atoi/" },
+        { id: "2394", name: "Count Number of Substrings", lc: null },
+        { id: "638", name: "Longest Palindromic Substring", lc: "https://leetcode.com/problems/longest-palindromic-substring/" },
+        { id: "993", name: "Sum of Beauty of All Substrings", lc: "https://leetcode.com/problems/sum-of-beauty-of-all-substrings/" },
+        { id: "984", name: "Reverse every word in a string", lc: "https://leetcode.com/problems/reverse-words-in-a-string/" }
+      ]}
+    ]
+  },
+  {
+    id: "682", name: "Learn LinkedList [Single LL, Double LL, Medium, Hard Problems]", icon: "🔗",
+    subcategories: [
+      { id: "490", name: "Learn 1D LinkedList", problems: [
+        { id: "1237", name: "Introduction to Singly LinkedList", lc: null },
+        { id: "356", name: "Insertion at the head of Linked List", lc: null },
+        { id: "352", name: "Deletion of the head of LL", lc: "https://leetcode.com/problems/delete-node-in-a-linked-list/" },
+        { id: "470", name: "Find the length of the Linked List", lc: null },
+        { id: "905", name: "Search in Linked List", lc: null }
+      ]},
+      { id: "491", name: "Learn Doubly LinkedList", problems: [
+        { id: "1234", name: "Introduction to Doubly LL", lc: null },
+        { id: "361", name: "Insert node before head in Doubly Linked List", lc: null },
+        { id: "348", name: "Delete head of Doubly Linked List", lc: null },
+        { id: "900", name: "Reverse a Doubly Linked List", lc: null }
+      ]},
+      { id: "493", name: "Medium Problems of LL", problems: [
+        { id: "2810", name: "Middle of a LinkedList [TortoiseHare Method]", lc: "https://leetcode.com/problems/middle-of-the-linked-list/" },
+        { id: "2850", name: "Reverse a LinkedList [Iterative]", lc: "https://leetcode.com/problems/reverse-linked-list/" },
+        { id: "627", name: "Reverse a LL", lc: "https://leetcode.com/problems/reverse-linked-list/" },
+        { id: "2845", name: "Detect a loop in LL", lc: "https://leetcode.com/problems/linked-list-cycle/" },
+        { id: "2847", name: "Find the starting point in LL", lc: "https://leetcode.com/problems/linked-list-cycle-ii/" },
+        { id: "623", name: "Length of loop in LL", lc: null },
+        { id: "2844", name: "Check if LL is palindrome or not", lc: "https://leetcode.com/problems/palindrome-linked-list/" },
+        { id: "628", name: "Segregate odd and even nodes in Linked List", lc: "https://leetcode.com/problems/odd-even-linked-list/" },
+        { id: "2849", name: "Remove Nth node from the back of the LL", lc: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/" },
+        { id: "619", name: "Delete the middle node in LL", lc: "https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/" },
+        { id: "616", name: "Sort LL", lc: "https://leetcode.com/problems/sort-list/" },
+        { id: "629", name: "Sort a Linked List of 0's 1's and 2's", lc: null },
+        { id: "2846", name: "Find the intersection point of Y LL", lc: "https://leetcode.com/problems/intersection-of-two-linked-lists/" },
+        { id: "617", name: "Add one to a number represented by LL", lc: null },
+        { id: "625", name: "Add two numbers in Linked List", lc: "https://leetcode.com/problems/add-two-numbers/" }
+      ]},
+      { id: "492", name: "Medium Problems of DLL", problems: [
+        { id: "609", name: "Delete all occurrences of a key in DLL", lc: null },
+        { id: "452", name: "Find Pairs with Given Sum in Doubly Linked List", lc: null },
+        { id: "610", name: "Remove duplicated from sorted DLL", lc: null }
+      ]},
+      { id: "489", name: "Hard Problems of LL", problems: [
+        { id: "2842", name: "Reverse LL in group of given size K", lc: "https://leetcode.com/problems/reverse-nodes-in-k-group/" },
+        { id: "2843", name: "Rotate a LL", lc: "https://leetcode.com/problems/rotate-list/" },
+        { id: "2841", name: "Flattening of LL", lc: null },
+        { id: "611", name: "Clone a LL with random and next pointer", lc: "https://leetcode.com/problems/copy-list-with-random-pointer/" }
+      ]}
+    ]
+  },
+  {
+    id: "684", name: "Recursion [PatternWise]", icon: "🔄",
+    subcategories: [
+      { id: "500", name: "Get a Strong Hold", problems: [
+        { id: "2862", name: "Recursive Implementation of atoi()", lc: "https://leetcode.com/problems/string-to-integer-atoi/" },
+        { id: "2855", name: "Pow(x, n)", lc: "https://leetcode.com/problems/powx-n/" },
+        { id: "222", name: "Count Good Numbers", lc: "https://leetcode.com/problems/count-good-numbers/" },
+        { id: "2858", name: "Sort a stack using recursion", lc: null },
+        { id: "901", name: "Reverse a Stack", lc: null }
+      ]},
+      { id: "501", name: "Subsequences Pattern", problems: [
+        { id: "493", name: "Generate Binary Strings Without Consecutive 1s", lc: null },
+        { id: "876", name: "Generate Parentheses", lc: "https://leetcode.com/problems/generate-parentheses/" },
+        { id: "878", name: "Power Set", lc: null },
+        { id: "2400", name: "Learn All Patterns of Subsequences (Theory)", lc: null },
+        { id: "880", name: "Count all subsequences with sum K", lc: null },
+        { id: "879", name: "Check if there exists a subsequence with sum K", lc: null },
+        { id: "864", name: "Combination Sum", lc: "https://leetcode.com/problems/combination-sum/" },
+        { id: "865", name: "Combination Sum II", lc: "https://leetcode.com/problems/combination-sum-ii/" },
+        { id: "867", name: "Subsets I", lc: null },
+        { id: "868", name: "Subsets II", lc: "https://leetcode.com/problems/subsets-ii/" },
+        { id: "866", name: "Combination Sum III", lc: "https://leetcode.com/problems/combination-sum-iii/" },
+        { id: "875", name: "Letter Combinations of a Phone Number", lc: "https://leetcode.com/problems/letter-combinations-of-a-phone-number/" }
+      ]},
+      { id: "502", name: "Trying out all Combos / Hard", problems: [
+        { id: "871", name: "Palindrome partitioning", lc: null },
+        { id: "874", name: "Word Search", lc: "https://leetcode.com/problems/word-search/" },
+        { id: "870", name: "N Queen", lc: "https://leetcode.com/problems/n-queens/" },
+        { id: "872", name: "Rat in a Maze", lc: null },
+        { id: "4", name: "Word Break", lc: null },
+        { id: "869", name: "M Coloring Problem", lc: null },
+        { id: "873", name: "Sudoku Solver", lc: "https://leetcode.com/problems/sudoku-solver/" },
+        { id: "3", name: "Expression Add Operators", lc: "https://leetcode.com/problems/expression-add-operators/" }
+      ]}
+    ]
+  },
+  {
+    id: "676", name: "Bit Manipulation [Concepts & Problems]", icon: "⚙️",
+    subcategories: [
+      { id: "466", name: "Learn Bit Manipulation", problems: [
+        { id: "1155", name: "Introduction to Bits and Tricks", lc: null },
+        { id: "177", name: "Check if the i-th bit is Set or Not", lc: null },
+        { id: "171", name: "Check if a Number is Odd or Not", lc: null },
+        { id: "172", name: "Check if a Number is Power of 2 or Not", lc: "https://leetcode.com/problems/power-of-two/" },
+        { id: "243", name: "Count the Number of Set Bits", lc: null },
+        { id: "2410", name: "Set/Unset the rightmost unset bit", lc: null },
+        { id: "1005", name: "Swap Two Numbers", lc: null },
+        { id: "140", name: "Divide two numbers without multiplication and division", lc: "https://leetcode.com/problems/divide-two-integers/" }
+      ]},
+      { id: "465", name: "Interview Problems", problems: [
+        { id: "141", name: "Minimum Bit Flips to Convert Number", lc: "https://leetcode.com/problems/minimum-bit-flips-to-convert-number/" },
+        { id: "143", name: "Single Number - I", lc: "https://leetcode.com/problems/single-number/" },
+        { id: "142", name: "Power Set Bit Manipulation", lc: "https://leetcode.com/problems/subsets/" },
+        { id: "146", name: "XOR of numbers in a given range", lc: null },
+        { id: "145", name: "Single Number - III", lc: null }
+      ]},
+      { id: "464", name: "Advanced Maths", problems: [
+        { id: "2853", name: "Print Prime Factors of a Number", lc: null },
+        { id: "370", name: "Divisors of a Number", lc: null },
+        { id: "651", name: "Count primes in range L to R", lc: "https://leetcode.com/problems/count-primes/" },
+        { id: "652", name: "Prime factorisation of a Number", lc: null },
+        { id: "877", name: "Pow(x,n)", lc: "https://leetcode.com/problems/powx-n/" }
+      ]}
+    ]
+  },
+  {
+    id: "687", name: "Stack and Queues [Learning, Pre-In-Post-fix, Monotonic Stack, Implementation]", icon: "📚",
+    subcategories: [
+      { id: "509", name: "Learning", problems: [
+        { id: "390", name: "Implement Stack using Arrays", lc: null },
+        { id: "387", name: "Implement Queue using Arrays", lc: null },
+        { id: "392", name: "Implement Stack using Queue", lc: "https://leetcode.com/problems/implement-stack-using-queues/" },
+        { id: "389", name: "Implement Queue using Stack", lc: "https://leetcode.com/problems/implement-queue-using-stacks/" },
+        { id: "391", name: "Implement stack using Linkedlist", lc: null },
+        { id: "388", name: "Implement queue using Linkedlist", lc: null },
+        { id: "966", name: "Balanced Paranthesis", lc: "https://leetcode.com/problems/valid-parentheses/" },
+        { id: "958", name: "Implement Min Stack", lc: "https://leetcode.com/problems/min-stack/" }
+      ]},
+      { id: "511", name: "Prefix, Infix, PostFix Conversion Problems", problems: [
+        { id: "586", name: "Infix to Postfix Conversion", lc: null },
+        { id: "848", name: "Prefix to Infix Conversion", lc: null },
+        { id: "849", name: "Prefix to Postfix Conversion", lc: null },
+        { id: "825", name: "Postfix to Prefix Conversion", lc: null },
+        { id: "824", name: "Postfix to Infix Conversion", lc: null },
+        { id: "587", name: "Infix to Prefix Conversion", lc: null }
+      ]},
+      { id: "510", name: "Monotonic Stack/Queue Problems [VVV. Imp]", problems: [
+        { id: "968", name: "Next Greater Element", lc: "https://leetcode.com/problems/next-greater-element-i/" },
+        { id: "969", name: "Next Greater Element - 2", lc: "https://leetcode.com/problems/next-greater-element-ii/" },
+        { id: "768", name: "Next Smaller Element", lc: null },
+        { id: "285", name: "Number of Greater Elements to the Right", lc: null },
+        { id: "965", name: "Trapping Rainwater", lc: "https://leetcode.com/problems/trapping-rain-water/" },
+        { id: "971", name: "Sum of Subarray Minimums", lc: "https://leetcode.com/problems/sum-of-subarray-minimums/" },
+        { id: "967", name: "Asteroid Collision", lc: "https://leetcode.com/problems/asteroid-collision/" },
+        { id: "972", name: "Sum of Subarray Ranges", lc: "https://leetcode.com/problems/sum-of-subarray-ranges/" },
+        { id: "970", name: "Remove K Digits", lc: "https://leetcode.com/problems/remove-k-digits/" },
+        { id: "959", name: "Largest rectangle in a histogram", lc: "https://leetcode.com/problems/largest-rectangle-in-histogram/" },
+        { id: "962", name: "Maximum Rectangles", lc: "https://leetcode.com/problems/maximal-rectangle/" }
+      ]},
+      { id: "508", name: "Implementation Problems", problems: [
+        { id: "963", name: "Sliding Window Maximum", lc: "https://leetcode.com/problems/sliding-window-maximum/" },
+        { id: "964", name: "Stock span problem", lc: "https://leetcode.com/problems/online-stock-span/" },
+        { id: "957", name: "Celebrity Problem", lc: null },
+        { id: "961", name: "LRU Cache", lc: null },
+        { id: "960", name: "LFU Cache", lc: "https://leetcode.com/problems/lfu-cache/" }
+      ]}
+    ]
+  },
+  {
+    id: "685", name: "Sliding Window & Two Pointer Combined Problems", icon: "🪟",
+    subcategories: [
+      { id: "504", name: "Medium Problems", problems: [
+        { id: "2857", name: "Longest Substring Without Repeating Characters", lc: "https://leetcode.com/problems/longest-substring-without-repeating-characters/" },
+        { id: "930", name: "Max Consecutive Ones III", lc: "https://leetcode.com/problems/max-consecutive-ones-iii/" },
+        { id: "926", name: "Fruit Into Baskets", lc: null },
+        { id: "927", name: "Longest Repeating Character Replacement", lc: "https://leetcode.com/problems/longest-repeating-character-replacement/" },
+        { id: "923", name: "Binary Subarrays With Sum", lc: "https://leetcode.com/problems/binary-subarrays-with-sum/" },
+        { id: "924", name: "Count number of Nice subarrays", lc: "https://leetcode.com/problems/count-number-of-nice-subarrays/" },
+        { id: "925", name: "Number of Substrings Containing All Three Characters", lc: "https://leetcode.com/problems/number-of-substrings-containing-all-three-characters/" },
+        { id: "922", name: "Maximum Points You Can Obtain from Cards", lc: "https://leetcode.com/problems/maximum-points-you-can-obtain-from-cards/" }
+      ]},
+      { id: "503", name: "Hard Problems", problems: [
+        { id: "928", name: "Longest Substring With At Most K Distinct Characters", lc: "https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters/" },
+        { id: "988", name: "Subarrays with K Different Integers", lc: "https://leetcode.com/problems/subarrays-with-k-different-integers/" },
+        { id: "931", name: "Minimum Window Substring", lc: "https://leetcode.com/problems/minimum-window-substring/" },
+        { id: "754", name: "Minimum Window Subsequence", lc: "https://leetcode.com/problems/minimum-window-subsequence/" }
+      ]}
+    ]
+  },
+  {
+    id: "680", name: "Heaps [Learning, Medium, Hard Problems]", icon: "🏔️",
+    subcategories: [
+      { id: "485", name: "Learning", problems: [
+        { id: "1223", name: "Heaps (Theory Video)", lc: null },
+        { id: "576", name: "Implement Min Heap", lc: null },
+        { id: "571", name: "Check if an array represents a min heap", lc: null },
+        { id: "572", name: "Convert Min Heap to Max Heap", lc: null }
+      ]},
+      { id: "486", name: "Medium Problems", problems: [
+        { id: "578", name: "K-th Largest element in an array", lc: null },
+        { id: "2840", name: "Kth smallest element in an array [use priority queue]", lc: null },
+        { id: "2409", name: "Sort K sorted array", lc: null },
+        { id: "569", name: "Merge K sorted Lists", lc: "https://leetcode.com/problems/merge-k-sorted-lists/" },
+        { id: "898", name: "Replace Elements by Their Rank", lc: null },
+        { id: "1008", name: "Task Scheduler", lc: "https://leetcode.com/problems/task-scheduler/" },
+        { id: "556", name: "Hand of Straights", lc: "https://leetcode.com/problems/hand-of-straights/" }
+      ]},
+      { id: "484", name: "Hard Problems", problems: [
+        { id: "565", name: "Design Twitter", lc: "https://leetcode.com/problems/design-twitter/" },
+        { id: "755", name: "Minimum Cost to Connect Sticks", lc: null },
+        { id: "2838", name: "Kth largest element in a stream of running integers", lc: "https://leetcode.com/problems/kth-largest-element-in-a-stream/" },
+        { id: "568", name: "Maximum Sum Combination", lc: null },
+        { id: "566", name: "Find Median from Data Stream", lc: "https://leetcode.com/problems/find-median-from-data-stream/" },
+        { id: "1018", name: "Top K Frequent Elements", lc: "https://leetcode.com/problems/top-k-frequent-elements/" }
+      ]}
+    ]
+  },
+  {
+    id: "679", name: "Greedy Algorithms [Easy, Medium/Hard]", icon: "✅",
+    subcategories: [
+      { id: "482", name: "Easy Problems", problems: [
+        { id: "2834", name: "Assign Cookies", lc: "https://leetcode.com/problems/assign-cookies/" },
+        { id: "489", name: "Fractional Knapsack", lc: null },
+        { id: "319", name: "Minimum coins", lc: "https://leetcode.com/problems/coin-change/" },
+        { id: "543", name: "Lemonade Change", lc: "https://leetcode.com/problems/lemonade-change/" },
+        { id: "545", name: "Valid Paranthesis Checker", lc: "https://leetcode.com/problems/valid-parenthesis-string/" }
+      ]},
+      { id: "483", name: "Medium/Hard", problems: [
+        { id: "549", name: "N meetings in one room", lc: null },
+        { id: "542", name: "Jump Game - I", lc: "https://leetcode.com/problems/jump-game/" },
+        { id: "595", name: "Jump Game II", lc: "https://leetcode.com/problems/jump-game-ii/" },
+        { id: "548", name: "Minimum number of platforms required for a railway", lc: null },
+        { id: "547", name: "Job sequencing Problem", lc: null },
+        { id: "544", name: "Candy", lc: "https://leetcode.com/problems/candy/" },
+        { id: "551", name: "Shortest Job First", lc: null },
+        { id: "2859", name: "Program for Least Recently Used (LRU) Page Replacement Algorithm", lc: null },
+        { id: "546", name: "Insert Interval", lc: "https://leetcode.com/problems/insert-interval/" },
+        { id: "712", name: "Merge Intervals", lc: "https://leetcode.com/problems/merge-intervals/" },
+        { id: "550", name: "Non-overlapping Intervals", lc: "https://leetcode.com/problems/non-overlapping-intervals/" }
+      ]}
+    ]
+  }
+];
+
+// --- State ---
+let activeFilter = 'all';
+let searchTerm = '';
+
+function getKey(id) { return 'a2z_done_' + id; }
+function isDone(id) { return localStorage.getItem(getKey(id)) === '1'; }
+function setDone(id, val) { val ? localStorage.setItem(getKey(id), '1') : localStorage.removeItem(getKey(id)); }
+
+// --- Build UI ---
+function buildUI() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  let totalProblems = 0, doneProblems = 0;
+
+  DATA.forEach((cat, ci) => {
+    const catEl = document.createElement('div');
+    catEl.className = 'category';
+    catEl.id = 'cat-' + cat.id;
+
+    let catTotal = 0, catDone = 0;
+    cat.subcategories.forEach(sub => {
+      sub.problems.forEach(p => {
+        catTotal++;
+        totalProblems++;
+        if (isDone(p.id)) { catDone++; doneProblems++; }
+      });
+    });
+
+    const catHeader = document.createElement('div');
+    catHeader.className = 'category-header';
+    catHeader.innerHTML = `
+      <div class="cat-icon">${cat.icon}</div>
+      <div class="cat-title">${ci+1}. ${cat.name}</div>
+      <div class="cat-progress">${catDone}/${catTotal}</div>
+      <div style="width:80px;margin-left:10px"><div class="progress-bar"><div class="progress-fill" id="pfill-${cat.id}" style="width:${catTotal?Math.round(catDone/catTotal*100):0}%"></div></div></div>
+      <span class="cat-arrow">▶</span>`;
+    catHeader.onclick = () => { catEl.classList.toggle('open'); };
+
+    const catBody = document.createElement('div');
+    catBody.className = 'category-body';
+
+    cat.subcategories.forEach((sub, si) => {
+      const subEl = document.createElement('div');
+      subEl.className = 'subcategory';
+      subEl.id = 'sub-' + sub.id;
+
+      const subHeader = document.createElement('div');
+      subHeader.className = 'subcat-header';
+      subHeader.innerHTML = `<span class="subcat-arrow">▶</span><span class="subcat-title">${sub.name}</span><span class="subcat-count">${sub.problems.length} problems</span>`;
+      subHeader.onclick = () => { subEl.classList.toggle('open'); };
+
+      const problemList = document.createElement('div');
+      problemList.className = 'problem-list';
+
+      sub.problems.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'problem-row' + (isDone(p.id) ? ' done' : '');
+        row.id = 'row-' + p.id;
+        row.dataset.name = p.name.toLowerCase();
+        row.dataset.haslc = p.lc ? '1' : '0';
+
+        const check = document.createElement('div');
+        check.className = 'check-btn' + (isDone(p.id) ? ' checked' : '');
+        check.title = 'Mark as done';
+        check.onclick = (e) => { e.stopPropagation(); toggleDone(p.id, cat.id, sub.id); };
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'problem-name';
+        nameSpan.textContent = p.name;
+
+        const lcEl = p.lc
+          ? Object.assign(document.createElement('a'), { href: p.lc, target: '_blank', rel: 'noopener', className: 'lc-link', innerHTML: '🟡 LeetCode' })
+          : Object.assign(document.createElement('span'), { className: 'no-lc', textContent: '—' });
+
+        row.appendChild(check);
+        row.appendChild(nameSpan);
+        row.appendChild(lcEl);
+        problemList.appendChild(row);
+      });
+
+      subEl.appendChild(subHeader);
+      subEl.appendChild(problemList);
+      catBody.appendChild(subEl);
+    });
+
+    catEl.appendChild(catHeader);
+    catEl.appendChild(catBody);
+    main.appendChild(catEl);
+  });
+
+  document.getElementById('total-count').textContent = totalProblems;
+  document.getElementById('done-count').textContent = doneProblems;
+  applyFilter();
+}
+
+function toggleDone(id, catId, subId) {
+  const was = isDone(id);
+  setDone(id, !was);
+  const row = document.getElementById('row-' + id);
+  const check = row.querySelector('.check-btn');
+  if (!was) { row.classList.add('done'); check.classList.add('checked'); }
+  else       { row.classList.remove('done'); check.classList.remove('checked'); }
+  updateCounts();
+  applyFilter();
+}
+
+function updateCounts() {
+  let total = 0, done = 0;
+  DATA.forEach(cat => {
+    let catTotal = 0, catDone = 0;
+    cat.subcategories.forEach(sub => {
+      sub.problems.forEach(p => {
+        total++; catTotal++;
+        if (isDone(p.id)) { done++; catDone++; }
+      });
+    });
+    const fill = document.getElementById('pfill-' + cat.id);
+    if (fill) fill.style.width = (catTotal ? Math.round(catDone/catTotal*100) : 0) + '%';
+    const catEl = document.getElementById('cat-' + cat.id);
+    if (catEl) {
+      const prog = catEl.querySelector('.cat-progress');
+      if (prog) prog.textContent = catDone + '/' + catTotal;
+    }
+  });
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('done-count').textContent = done;
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function doSearch() {
+  searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+  applyFilter();
+}
+
+function applyFilter() {
+  let anyVisible = false;
+  const rows = document.querySelectorAll('.problem-row');
+  rows.forEach(row => {
+    const name = row.dataset.name || '';
+    const haslc = row.dataset.haslc === '1';
+    const done = row.classList.contains('done');
+    let show = true;
+    if (searchTerm && !name.includes(searchTerm)) show = false;
+    if (activeFilter === 'done' && !done) show = false;
+    if (activeFilter === 'pending' && done) show = false;
+    if (activeFilter === 'lc' && !haslc) show = false;
+    row.style.display = show ? '' : 'none';
+    if (show) anyVisible = true;
+  });
+  document.getElementById('no-results').classList.toggle('show', !anyVisible && (searchTerm || activeFilter !== 'all'));
+}
+
+buildUI();
+</script>
+</body>
+</html>

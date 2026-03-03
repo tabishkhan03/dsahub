@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SDE Sheet</title>
+<style>
+  :root {
+    --bg: #06080f;
+    --surface: #0d1120;
+    --surface2: #141828;
+    --border: #1e2540;
+    --accent: #22d3ee;
+    --accent2: #38bdf8;
+    --text: #e0e8f8;
+    --muted: #5a6a90;
+    --done-bg: #051c20;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 1.3rem; font-weight: 700; }
+  header h1 span { color: var(--accent); }
+  .stat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 0.85rem; color: var(--muted); }
+  .stat-pill strong { color: var(--accent); }
+
+  .search-bar { padding: 20px 32px 0; }
+  .search-bar input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: var(--radius); font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  .filters { padding: 12px 32px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  main { padding: 20px 32px 60px; max-width: 1100px; margin: 0 auto; }
+
+  .category { margin-bottom: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .category-header { padding: 14px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; transition: background 0.2s; }
+  .category-header:hover { background: var(--surface2); }
+  .cat-icon { width: 30px; height: 30px; border-radius: 7px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .cat-title { font-weight: 600; font-size: 0.95rem; flex: 1; }
+  .cat-meta { display: flex; align-items: center; gap: 10px; }
+  .cat-progress { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .cat-arrow { color: var(--muted); transition: transform 0.25s; font-size: 0.75rem; }
+  .category.open .cat-arrow { transform: rotate(90deg); }
+  .progress-bar { width: 70px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
+  .lc-link { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: #051c20; border: 1px solid #0e4050; border-radius: 6px; color: #22d3ee; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .category-body { display: none; border-top: 1px solid var(--border); }
+  .category.open .category-body { display: block; }
+
+  .problem-row { display: flex; align-items: center; gap: 14px; padding: 10px 20px; border-bottom: 1px solid #1e1e26; transition: background 0.15s; }
+  .problem-row:last-child { border-bottom: none; }
+  .problem-row:hover { background: #16161e; }
+  .problem-row.done { background: var(--done-bg); }
+  .problem-row.done .problem-name { text-decoration: line-through; color: var(--muted); }
+
+  .check-btn { width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .check-btn:hover { border-color: var(--accent); }
+  .check-btn.checked { background: var(--accent); border-color: var(--accent); }
+  .check-btn.checked::after { content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; }
+
+  .problem-name { flex: 1; font-size: 0.88rem; }
+
+  .lc-link:hover { background: rgba(34,211,238,0.08); border-color: #22d3ee; }
+  .no-lc { color: var(--muted); font-size: 0.75rem; padding: 3px 10px; }
+
+  .no-results { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1rem; display: none; }
+  .no-results.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SDE <span>Sheet</span></h1>
+  <div class="stat-pill">Completed: <strong id="done-count">0</strong> / <strong id="total-count">0</strong></div>
+</header>
+
+<div class="search-bar">
+  <input type="text" id="searchBox" placeholder="🔍  Search questions..." oninput="doSearch()"/>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('done',this)">✅ Done</button>
+  <button class="filter-btn" onclick="setFilter('pending',this)">⏳ Pending</button>
+  <button class="filter-btn" onclick="setFilter('lc',this)">🟡 Has LeetCode</button>
+</div>
+
+<main id="main">
+  <div class="no-results" id="no-results">No questions match your search.</div>
+</main>
+
+<script>
+const ICONS = ["📊","📈","🔢","🔗","🌿","🔄","🔍","🏔️","📚","💬","🌲","🌳","🗃️","📐","⚡","🧩"];
+const DATA = [
+  { id:"612", name:"Arrays", problems:[
+    { id:"911", name:"Set Matrix Zeroes", lc:"https://leetcode.com/problems/set-matrix-zeroes/" },
+    { id:"813", name:"Pascal's Triangle I", lc:"https://leetcode.com/problems/pascals-triangle/" },
+    { id:"31",  name:"Next Permutation", lc:"https://leetcode.com/problems/next-permutation/" },
+    { id:"29",  name:"Kadane's Algorithm", lc:null },
+    { id:"36",  name:"Sort an array of 0's 1's and 2's", lc:"https://leetcode.com/problems/sort-colors/" },
+    { id:"2798",name:"Stock Buy and Sell", lc:"https://leetcode.com/problems/best-time-to-buy-and-sell-stock/" }
+  ]},
+  { id:"613", name:"Arrays Part-II", problems:[
+    { id:"35",  name:"Rotate matrix by 90 degrees", lc:"https://leetcode.com/problems/rotate-image/" },
+    { id:"715", name:"Merge Overlapping Subintervals", lc:"https://leetcode.com/problems/merge-intervals/" },
+    { id:"25",  name:"Merge two sorted arrays without extra space", lc:"https://leetcode.com/problems/merge-sorted-array/" },
+    { id:"465", name:"Find the Duplicate Number", lc:"https://leetcode.com/problems/find-the-duplicate-number/" },
+    { id:"21",  name:"Find the repeating and missing number", lc:null },
+    { id:"2758",name:"Inversion of Array (Pre-req: Merge Sort)", lc:null }
+  ]},
+  { id:"614", name:"Arrays Part-III", problems:[
+    { id:"69",  name:"Search in a 2D matrix", lc:"https://leetcode.com/problems/search-a-2d-matrix/" },
+    { id:"2855",name:"Pow(x, n)", lc:"https://leetcode.com/problems/powx-n/" },
+    { id:"22",  name:"Majority Element-I", lc:"https://leetcode.com/problems/majority-element/" },
+    { id:"23",  name:"Majority Element-II", lc:"https://leetcode.com/problems/majority-element-ii/" },
+    { id:"297", name:"Grid unique paths", lc:"https://leetcode.com/problems/unique-paths/" },
+    { id:"26",  name:"Reverse Pairs", lc:"https://leetcode.com/problems/reverse-pairs/" }
+  ]},
+  { id:"615", name:"Arrays Part-IV", problems:[
+    { id:"37",  name:"Two Sum", lc:"https://leetcode.com/problems/two-sum/" },
+    { id:"28",  name:"4 Sum", lc:"https://leetcode.com/problems/4sum/" },
+    { id:"563", name:"Longest Consecutive Sequence in an Array", lc:"https://leetcode.com/problems/longest-consecutive-sequence/solution/" },
+    { id:"2837",name:"Largest Subarray with K sum", lc:null },
+    { id:"562", name:"Count subarrays with given xor K", lc:null },
+    { id:"929", name:"Longest Substring Without Repeating Characters", lc:"https://leetcode.com/problems/longest-substring-without-repeating-characters/" }
+  ]},
+  { id:"629", name:"Linked List", problems:[
+    { id:"627", name:"Reverse a LL", lc:"https://leetcode.com/problems/reverse-linked-list/" },
+    { id:"448", name:"Find Middle of Linked List", lc:"https://leetcode.com/problems/middle-of-the-linked-list/" },
+    { id:"613b",name:"Merge two Sorted Lists", lc:"https://leetcode.com/problems/merge-two-sorted-lists/" },
+    { id:"626", name:"Remove Nth node from the back of the LL", lc:"https://leetcode.com/problems/remove-nth-node-from-end-of-list/" },
+    { id:"2848",name:"Add two numbers as LinkedList", lc:"https://leetcode.com/problems/add-two-numbers/" },
+    { id:"258", name:"Delete Node in a Linked List O(1)", lc:"https://leetcode.com/problems/delete-node-in-a-linked-list/" }
+  ]},
+  { id:"631", name:"Linked List Part-II", problems:[
+    { id:"621", name:"Find the intersection point of Y LL", lc:"https://leetcode.com/problems/intersection-of-two-linked-lists/" },
+    { id:"620", name:"Detect a loop in LL", lc:"https://leetcode.com/problems/linked-list-cycle/" },
+    { id:"614b",name:"Reverse LL in group of given size K", lc:"https://leetcode.com/problems/reverse-nodes-in-k-group/" },
+    { id:"618", name:"Check if LL is palindrome or not", lc:"https://leetcode.com/problems/palindrome-linked-list/" },
+    { id:"622", name:"Find the starting point in LL", lc:"https://leetcode.com/problems/linked-list-cycle-ii/" },
+    { id:"612b",name:"Flattening of LL", lc:null }
+  ]},
+  { id:"630", name:"Linked List and Arrays", problems:[
+    { id:"615b",name:"Rotate a LL", lc:"https://leetcode.com/problems/rotate-list/description/" },
+    { id:"611", name:"Clone a LL with random and next pointer", lc:"https://leetcode.com/problems/copy-list-with-random-pointer/" },
+    { id:"27",  name:"3 Sum", lc:"https://leetcode.com/problems/3sum/" },
+    { id:"965", name:"Trapping Rainwater", lc:"https://leetcode.com/problems/trapping-rain-water/" },
+    { id:"47",  name:"Remove duplicates from sorted array", lc:"https://leetcode.com/problems/remove-duplicates-from-sorted-array/" },
+    { id:"42",  name:"Maximum Consecutive Ones", lc:"https://leetcode.com/problems/max-consecutive-ones/" }
+  ]},
+  { id:"627", name:"Greedy Algorithm", problems:[
+    { id:"549", name:"N meetings in one room", lc:null },
+    { id:"548", name:"Minimum number of platforms required for a railway", lc:null },
+    { id:"547", name:"Job sequencing Problem", lc:null },
+    { id:"489", name:"Fractional Knapsack", lc:null },
+    { id:"319", name:"Minimum coins", lc:"https://leetcode.com/problems/coin-change/" },
+    { id:"541", name:"Assign Cookies", lc:"https://leetcode.com/problems/assign-cookies/" }
+  ]},
+  { id:"632", name:"Recursion", problems:[
+    { id:"2805",name:"Subset Sums", lc:null },
+    { id:"868", name:"Subsets II", lc:"https://leetcode.com/problems/subsets-ii/" },
+    { id:"864", name:"Combination Sum", lc:"https://leetcode.com/problems/combination-sum/" },
+    { id:"865", name:"Combination Sum II", lc:"https://leetcode.com/problems/combination-sum-ii/" },
+    { id:"871", name:"Palindrome partitioning", lc:null },
+    { id:"818", name:"Permutation Sequence", lc:"https://leetcode.com/problems/permutation-sequence/" }
+  ]},
+  { id:"633", name:"Recursion and Backtracking", problems:[
+    { id:"821", name:"Permutations of a String", lc:"https://leetcode.com/problems/permutations/" },
+    { id:"870", name:"N Queen", lc:"https://leetcode.com/problems/n-queens/" },
+    { id:"873", name:"Sudoku Solver", lc:"https://leetcode.com/problems/sudoku-solver/" },
+    { id:"869", name:"M Coloring Problem", lc:null },
+    { id:"872", name:"Rat in a Maze", lc:null },
+    { id:"2757",name:"Word Break (print all ways)", lc:null }
+  ]},
+  { id:"616", name:"Binary Search", problems:[
+    { id:"2771",name:"The N-th root of an integer", lc:null },
+    { id:"67",  name:"Matrix Median", lc:null },
+    { id:"90",  name:"Single element in sorted array", lc:"https://leetcode.com/problems/single-element-in-a-sorted-array/" },
+    { id:"2769",name:"Search element in rotated sorted array / find pivot", lc:"https://leetcode.com/problems/search-in-rotated-sorted-array/" },
+    { id:"77",  name:"Median of 2 sorted arrays", lc:"https://leetcode.com/problems/median-of-two-sorted-arrays/" },
+    { id:"76",  name:"Kth element of 2 sorted arrays", lc:null },
+    { id:"2766",name:"Allocate Minimum Number of Pages", lc:null },
+    { id:"73",  name:"Aggressive Cows", lc:null }
+  ]},
+  { id:"628", name:"Heaps", problems:[
+    { id:"575", name:"Implement Max Heap", lc:null },
+    { id:"578", name:"K-th Largest element in an array", lc:null },
+    { id:"568", name:"Maximum Sum Combination", lc:null },
+    { id:"566", name:"Find Median from Data Stream", lc:"https://leetcode.com/problems/find-median-from-data-stream/" },
+    { id:"713", name:"Merge K Sorted Arrays", lc:null },
+    { id:"1018",name:"Top K Frequent Elements", lc:"https://leetcode.com/problems/top-k-frequent-elements/" }
+  ]},
+  { id:"634", name:"Stack and Queue", problems:[
+    { id:"390", name:"Implement Stack using Arrays", lc:null },
+    { id:"387", name:"Implement Queue using Arrays", lc:null },
+    { id:"2808",name:"Implement Stack using Queue (single queue)", lc:"https://leetcode.com/problems/implement-stack-using-queues/" },
+    { id:"389", name:"Implement Queue using Stack", lc:"https://leetcode.com/problems/implement-queue-using-stacks/" },
+    { id:"966", name:"Balanced Paranthesis", lc:"https://leetcode.com/problems/valid-parentheses/" },
+    { id:"968", name:"Next Greater Element", lc:"https://leetcode.com/problems/next-greater-element-i/" },
+    { id:"936", name:"Sort a Stack", lc:null }
+  ]},
+  { id:"635", name:"Stack and Queue Part-II", problems:[
+    { id:"768", name:"Next Smaller Element", lc:null },
+    { id:"961", name:"LRU Cache", lc:null },
+    { id:"960", name:"LFU Cache", lc:"https://leetcode.com/problems/lfu-cache/" },
+    { id:"959", name:"Largest rectangle in a histogram", lc:"https://leetcode.com/problems/largest-rectangle-in-histogram/" },
+    { id:"963", name:"Sliding Window Maximum", lc:"https://leetcode.com/problems/sliding-window-maximum/" },
+    { id:"958", name:"Implement Min Stack", lc:"https://leetcode.com/problems/min-stack/" },
+    { id:"536", name:"Rotten Oranges", lc:"https://leetcode.com/problems/rotting-oranges/" },
+    { id:"964", name:"Stock span problem", lc:"https://leetcode.com/problems/online-stock-span/" },
+    { id:"687", name:"Maximum of Minimums for Every Window Size", lc:null },
+    { id:"957", name:"Celebrity Problem", lc:"https://leetcode.com/accounts/login/?next=/problems/find-the-celebrity/" }
+  ]},
+  { id:"636", name:"String", problems:[
+    { id:"984", name:"Reverse every word in a string", lc:"https://leetcode.com/problems/reverse-words-in-a-string/" },
+    { id:"2852",name:"Longest Palindrome in a string", lc:"https://leetcode.com/problems/longest-palindromic-substring/" },
+    { id:"903", name:"Roman to Integer", lc:"https://leetcode.com/problems/roman-to-integer/" },
+    { id:"2861",name:"Implement ATOI/STRSTR", lc:"https://leetcode.com/problems/string-to-integer-atoi/" },
+    { id:"395", name:"Longest Common Prefix", lc:"https://leetcode.com/problems/longest-common-prefix/" },
+    { id:"979", name:"Rabin Karp Algorithm", lc:"https://leetcode.com/problems/repeated-string-match/discuss/416144/Rabin-Karp-algorithm-C%2B%2B-implementation" }
+  ]},
+  { id:"637", name:"String Part-II", problems:[
+    { id:"981", name:"Z function", lc:null },
+    { id:"977", name:"KMP Algorithm or LPS array", lc:"https://leetcode.com/problems/implement-strstr/" },
+    { id:"312", name:"Minimum insertions to make string palindrome", lc:"https://leetcode.com/problems/minimum-insertion-steps-to-make-a-string-palindrome/" },
+    { id:"400", name:"Valid Anagram", lc:"https://leetcode.com/problems/valid-anagram/" },
+    { id:"982", name:"Count and say", lc:"https://leetcode.com/problems/count-and-say/" },
+    { id:"198", name:"Compare version numbers", lc:"https://leetcode.com/problems/compare-version-numbers/" }
+  ]},
+  { id:"619", name:"Binary Tree", problems:[
+    { id:"133", name:"Inorder Traversal", lc:"https://leetcode.com/problems/binary-tree-inorder-traversal/" },
+    { id:"2790",name:"Preorder Traversal", lc:"https://leetcode.com/problems/binary-tree-preorder-traversal/" },
+    { id:"135", name:"Postorder Traversal", lc:"https://leetcode.com/problems/binary-tree-postorder-traversal/" },
+    { id:"139", name:"Morris Inorder Traversal", lc:"https://leetcode.com/problems/binary-tree-inorder-traversal/" },
+    { id:"138", name:"Morris Preorder Traversal", lc:"https://leetcode.com/problems/binary-tree-inorder-traversal/" },
+    { id:"123", name:"Right/Left View of BT", lc:"https://leetcode.com/problems/binary-tree-right-side-view/" },
+    { id:"115", name:"Bottom view of BT", lc:null },
+    { id:"124", name:"Top View of BT", lc:null },
+    { id:"136", name:"Pre, Post, Inorder in one traversal", lc:null },
+    { id:"125", name:"Vertical Order Traversal", lc:"https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree/" },
+    { id:"122", name:"Print root to leaf path in BT", lc:null },
+    { id:"119", name:"Maximum Width of BT", lc:"https://leetcode.com/problems/maximum-width-of-binary-tree/" }
+  ]},
+  { id:"620", name:"Binary Tree Part-II", problems:[
+    { id:"134", name:"Level Order Traversal", lc:"https://leetcode.com/problems/binary-tree-level-order-traversal/" },
+    { id:"131", name:"Maximum Depth in BT", lc:"https://leetcode.com/problems/maximum-depth-of-binary-tree/" },
+    { id:"130", name:"Diameter of Binary Tree", lc:"https://leetcode.com/problems/diameter-of-binary-tree/" },
+    { id:"127", name:"Check for balanced binary tree", lc:"https://leetcode.com/problems/balanced-binary-tree/" },
+    { id:"118", name:"LCA in BT", lc:"https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/" },
+    { id:"129", name:"Check if two trees are identical or not", lc:"https://leetcode.com/problems/same-tree/" },
+    { id:"126", name:"Zig Zag or Spiral Traversal", lc:"https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/" },
+    { id:"116", name:"Boundary Traversal", lc:"https://leetcode.com/problems/boundary-of-binary-tree/" }
+  ]},
+  { id:"621", name:"Binary Tree Part-III", problems:[
+    { id:"132", name:"Maximum path sum", lc:"https://leetcode.com/problems/binary-tree-maximum-path-sum/" },
+    { id:"110", name:"Construct a BT from Preorder and Inorder", lc:"https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/" },
+    { id:"109", name:"Construct a BT from Postorder and Inorder", lc:"https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/" },
+    { id:"2784",name:"Symmetric Binary Tree", lc:"https://leetcode.com/problems/symmetric-tree/" },
+    { id:"486", name:"Flatten Binary Tree to Linked List", lc:"https://leetcode.com/problems/flatten-binary-tree-to-linked-list/" },
+    { id:"128", name:"Check for symmetrical BTs", lc:"https://leetcode.com/problems/symmetric-tree/" },
+    { id:"185", name:"Children Sum Property in Binary Tree", lc:null }
+  ]},
+  { id:"617", name:"Binary Search Tree", problems:[
+    { id:"823", name:"Populating Next Right Pointers in Each Node", lc:"https://leetcode.com/problems/populating-next-right-pointers-in-each-node/" },
+    { id:"108", name:"Search in BST", lc:"https://leetcode.com/problems/search-in-a-binary-search-tree/" },
+    { id:"2391",name:"Construct BST from given keys", lc:"https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/" },
+    { id:"101", name:"Construct a BST from a preorder traversal", lc:"https://leetcode.com/problems/construct-binary-search-tree-from-preorder-traversal/" },
+    { id:"100", name:"Check if a tree is a BST or not", lc:"https://leetcode.com/problems/validate-binary-search-tree/" },
+    { id:"106", name:"LCA in BST", lc:"https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/" },
+    { id:"103", name:"Inorder successor and predecessor in BST", lc:"https://leetcode.com/problems/inorder-successor-in-bst/" }
+  ]},
+  { id:"618", name:"Binary Search Tree Part-II", problems:[
+    { id:"2779",name:"Floor in a BST", lc:null },
+    { id:"2777",name:"Ceil in a BST", lc:null },
+    { id:"2776",name:"Find K-th smallest element in BST", lc:"https://leetcode.com/problems/kth-smallest-element-in-a-bst/" },
+    { id:"105", name:"Kth Smallest and Largest element in BST", lc:"https://leetcode.com/problems/kth-smallest-element-in-a-bst/" },
+    { id:"99",  name:"Two sum in BST", lc:"https://leetcode.com/problems/two-sum-iv-input-is-a-bst/" },
+    { id:"96",  name:"BST iterator", lc:"https://leetcode.com/problems/binary-search-tree-iterator/" },
+    { id:"2773",name:"Size of the largest BST in a Binary Tree", lc:"https://leetcode.com/problems/maximum-sum-bst-in-binary-tree/" },
+    { id:"112", name:"Serialize and De-serialize BT", lc:"https://leetcode.com/problems/serialize-and-deserialize-binary-tree/" }
+  ]},
+  { id:"622", name:"Binary Trees [Miscellaneous]", problems:[
+    { id:"62",  name:"Binary Tree to Doubly Linked List", lc:"https://leetcode.com/problems/flatten-binary-tree-to-linked-list/" },
+    { id:"446", name:"Find Median in a Stream", lc:"https://leetcode.com/problems/find-median-from-data-stream/" },
+    { id:"567", name:"Kth largest element in a stream of running integers", lc:"https://leetcode.com/problems/kth-largest-element-in-a-stream/" },
+    { id:"279", name:"Distinct Numbers in Each Subarray", lc:null },
+    { id:"2839",name:"K-th largest element in an unsorted array", lc:"https://leetcode.com/problems/kth-largest-element-in-an-array/" },
+    { id:"2832",name:"Flood-fill Algorithm", lc:"https://leetcode.com/problems/flood-fill/" }
+  ]},
+  { id:"625", name:"Graph", problems:[
+    { id:"188", name:"Clone Graph", lc:"https://leetcode.com/problems/clone-graph/" },
+    { id:"2831",name:"DFS", lc:null },
+    { id:"529", name:"Traversal Techniques", lc:null },
+    { id:"2818",name:"Detect A cycle in Undirected Graph using BFS", lc:"https://leetcode.com/problems/course-schedule/" },
+    { id:"2819",name:"Detect A cycle in Undirected Graph using DFS", lc:"https://leetcode.com/problems/course-schedule/" },
+    { id:"2816",name:"Detect A cycle in a Directed Graph using DFS", lc:"https://leetcode.com/problems/course-schedule/" },
+    { id:"2815",name:"Detect A cycle in a Directed Graph using BFS", lc:"https://leetcode.com/problems/course-schedule/" },
+    { id:"2820",name:"Topological Sort BFS", lc:null },
+    { id:"2821",name:"Topological Sort DFS", lc:null },
+    { id:"2833",name:"Number of islands", lc:"https://leetcode.com/problems/number-of-islands/" },
+    { id:"499", name:"Bipartite graph", lc:"https://leetcode.com/problems/is-graph-bipartite/" },
+    { id:"2812",name:"Bipartite Check using DFS", lc:"https://leetcode.com/problems/is-graph-bipartite/" }
+  ]},
+  { id:"626", name:"Graph Part-II", problems:[
+    { id:"2811",name:"Strongly Connected Component (Kosaraju's algo)", lc:null },
+    { id:"520", name:"Dijkstra's algorithm", lc:null },
+    { id:"518", name:"Bellman ford algorithm", lc:null },
+    { id:"2829",name:"Floyd Warshall Algorithm", lc:null },
+    { id:"2824",name:"MST using Prim's Algo", lc:null },
+    { id:"2823",name:"MST using Kruskal's Algo", lc:null }
+  ]},
+  { id:"623", name:"Dynamic Programming", problems:[
+    { id:"2759",name:"Max Product Subarray", lc:"https://leetcode.com/problems/maximum-product-subarray/" },
+    { id:"636", name:"Longest Increasing Subsequence", lc:null },
+    { id:"308", name:"Longest common subsequence", lc:null },
+    { id:"315", name:"0 and 1 Knapsack", lc:null },
+    { id:"307", name:"Edit distance", lc:"https://leetcode.com/problems/edit-distance/" },
+    { id:"698", name:"Maximum Sum Increasing Subsequence", lc:null },
+    { id:"327", name:"Matrix chain multiplication", lc:null }
+  ]},
+  { id:"624", name:"Dynamic Programming Part-II", problems:[
+    { id:"2797",name:"Minimum sum path in the matrix", lc:"https://leetcode.com/problems/minimum-path-sum/" },
+    { id:"316", name:"Coin change II", lc:"https://leetcode.com/problems/coin-change-2/" },
+    { id:"323", name:"Subset sum equals to target", lc:null },
+    { id:"322", name:"Rod cutting problem", lc:null },
+    { id:"1004",name:"Super Egg Drop", lc:null },
+    { id:"4",   name:"Word Break", lc:null },
+    { id:"2854",name:"Palindrome Partitioning (MCM Variation)", lc:null },
+    { id:"691", name:"Maximum Profit in Job Scheduling", lc:null }
+  ]},
+  { id:"638", name:"Trie", problems:[
+    { id:"1028",name:"Trie Implementation and Operations", lc:"https://leetcode.com/problems/implement-trie-prefix-tree/" },
+    { id:"1027",name:"Trie Implementation and Advanced Operations", lc:null },
+    { id:"1023",name:"Longest Word with All Prefixes", lc:null },
+    { id:"1026",name:"Number of distinct substrings in a string", lc:null },
+    { id:"2856",name:"Power Set (this is very important)", lc:null },
+    { id:"1024",name:"Maximum XOR of two numbers in an array", lc:"https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array/" },
+    { id:"1025",name:"Maximum Xor with an element from an array", lc:"https://leetcode.com/problems/maximum-xor-with-an-element-from-array/" }
+  ]}
+];
+
+let activeFilter = 'all', searchTerm = '';
+const KEY_PREFIX = 'sde_done_';
+function isDone(id) { return localStorage.getItem(KEY_PREFIX+id)==='1'; }
+function setDone(id,v) { v ? localStorage.setItem(KEY_PREFIX+id,'1') : localStorage.removeItem(KEY_PREFIX+id); }
+
+function buildUI() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  let total=0, done=0;
+  DATA.forEach((cat,ci) => {
+    let ct=0, cd=0;
+    cat.problems.forEach(p=>{ ct++; total++; if(isDone(p.id)){cd++;done++;} });
+    const el = document.createElement('div');
+    el.className='category'; el.id='cat-'+cat.id;
+    const header = document.createElement('div');
+    header.className='category-header';
+    header.innerHTML=`
+      <div class="cat-icon">${ICONS[ci%ICONS.length]}</div>
+      <div class="cat-title">${ci+1}. ${cat.name}</div>
+      <div class="cat-meta">
+        <span class="cat-progress" id="cprog-${cat.id}">${cd}/${ct}</span>
+        <div class="progress-bar"><div class="progress-fill" id="pfill-${cat.id}" style="width:${ct?Math.round(cd/ct*100):0}%"></div></div>
+        <span class="cat-arrow">▶</span>
+      </div>`;
+    header.onclick=()=>el.classList.toggle('open');
+    const body = document.createElement('div');
+    body.className='category-body';
+    cat.problems.forEach(p=>{
+      const row=document.createElement('div');
+      row.className='problem-row'+(isDone(p.id)?' done':'');
+      row.id='row-'+p.id; row.dataset.name=p.name.toLowerCase(); row.dataset.haslc=p.lc?'1':'0';
+      const check=document.createElement('div');
+      check.className='check-btn'+(isDone(p.id)?' checked':'');
+      check.onclick=e=>{e.stopPropagation();toggleDone(p.id,cat.id);};
+      const name=document.createElement('span');
+      name.className='problem-name'; name.textContent=p.name;
+      const lc=p.lc
+        ? Object.assign(document.createElement('a'),{href:p.lc,target:'_blank',rel:'noopener',className:'lc-link',innerHTML:'🟡 LeetCode'})
+        : Object.assign(document.createElement('span'),{className:'no-lc',textContent:'—'});
+      row.appendChild(check); row.appendChild(name); row.appendChild(lc);
+      body.appendChild(row);
+    });
+    el.appendChild(header); el.appendChild(body);
+    main.appendChild(el);
+  });
+  document.getElementById('total-count').textContent=total;
+  document.getElementById('done-count').textContent=done;
+  applyFilter();
+}
+
+function toggleDone(id,catId) {
+  const was=isDone(id); setDone(id,!was);
+  const row=document.getElementById('row-'+id);
+  const check=row.querySelector('.check-btn');
+  if(!was){row.classList.add('done');check.classList.add('checked');}
+  else{row.classList.remove('done');check.classList.remove('checked');}
+  updateCounts(); applyFilter();
+}
+
+function updateCounts() {
+  let total=0,done=0;
+  DATA.forEach(cat=>{
+    let ct=0,cd=0;
+    cat.problems.forEach(p=>{ct++;total++;if(isDone(p.id)){cd++;done++;}});
+    const fill=document.getElementById('pfill-'+cat.id);
+    if(fill) fill.style.width=(ct?Math.round(cd/ct*100):0)+'%';
+    const prog=document.getElementById('cprog-'+cat.id);
+    if(prog) prog.textContent=cd+'/'+ct;
+  });
+  document.getElementById('total-count').textContent=total;
+  document.getElementById('done-count').textContent=done;
+}
+
+function setFilter(f,btn) {
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); applyFilter();
+}
+
+function doSearch() { searchTerm=document.getElementById('searchBox').value.toLowerCase().trim(); applyFilter(); }
+
+function applyFilter() {
+  let any=false;
+  document.querySelectorAll('.problem-row').forEach(row=>{
+    const nm=row.dataset.name||'', lc=row.dataset.haslc==='1', dn=row.classList.contains('done');
+    let show=true;
+    if(searchTerm && !nm.includes(searchTerm)) show=false;
+    if(activeFilter==='done' && !dn) show=false;
+    if(activeFilter==='pending' && dn) show=false;
+    if(activeFilter==='lc' && !lc) show=false;
+    row.style.display=show?'':'none';
+    if(show) any=true;
+  });
+  document.getElementById('no-results').classList.toggle('show',!any&&(searchTerm||activeFilter!=='all'));
+}
+
+buildUI();
+</script>
+</body>
+</html>

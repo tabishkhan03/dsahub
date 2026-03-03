@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>79 Sheet</title>
+<style>
+  :root {
+    --bg: #06080f;
+    --surface: #0d1120;
+    --surface2: #141828;
+    --border: #1e2540;
+    --accent: #22d3ee;
+    --accent2: #38bdf8;
+    --text: #e0e8f8;
+    --muted: #5a6a90;
+    --done-bg: #051c20;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 1.3rem; font-weight: 700; }
+  header h1 span { color: var(--accent); }
+  .stat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 0.85rem; color: var(--muted); }
+  .stat-pill strong { color: var(--accent); }
+
+  .search-bar { padding: 20px 32px 0; }
+  .search-bar input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: var(--radius); font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  .filters { padding: 12px 32px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  main { padding: 20px 32px 60px; max-width: 1100px; margin: 0 auto; }
+
+  .category { margin-bottom: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .category-header { padding: 14px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; transition: background 0.2s; }
+  .category-header:hover { background: var(--surface2); }
+  .cat-icon { width: 30px; height: 30px; border-radius: 7px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .cat-title { font-weight: 600; font-size: 0.95rem; flex: 1; }
+  .cat-meta { display: flex; align-items: center; gap: 10px; }
+  .cat-progress { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .cat-arrow { color: var(--muted); transition: transform 0.25s; font-size: 0.75rem; }
+  .category.open .cat-arrow { transform: rotate(90deg); }
+  .progress-bar { width: 70px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
+  .category-body { display: none; border-top: 1px solid var(--border); }
+  .category.open .category-body { display: block; }
+
+  .problem-row { display: flex; align-items: center; gap: 14px; padding: 10px 20px; border-bottom: 1px solid #1e1e26; transition: background 0.15s; }
+  .problem-row:last-child { border-bottom: none; }
+  .problem-row:hover { background: #16161e; }
+  .problem-row.done { background: var(--done-bg); }
+  .problem-row.done .problem-name { text-decoration: line-through; color: var(--muted); }
+
+  .check-btn { width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .check-btn:hover { border-color: var(--accent); }
+  .check-btn.checked { background: var(--accent); border-color: var(--accent); }
+  .check-btn.checked::after { content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; }
+
+  .problem-name { flex: 1; font-size: 0.88rem; }
+
+  .lc-link { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: #051c20; border: 1px solid #0e4050; border-radius: 6px; color: #22d3ee; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .lc-link:hover { background: rgba(34,211,238,0.08); border-color: #22d3ee; }
+  .no-lc { color: var(--muted); font-size: 0.75rem; padding: 3px 10px; }
+
+  .no-results { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1rem; display: none; }
+  .no-results.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>79 <span>Sheet</span></h1>
+  <div class="stat-pill">Completed: <strong id="done-count">0</strong> / <strong id="total-count">0</strong></div>
+</header>
+
+<div class="search-bar">
+  <input type="text" id="searchBox" placeholder="🔍  Search questions..." oninput="doSearch()"/>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('done',this)">✅ Done</button>
+  <button class="filter-btn" onclick="setFilter('pending',this)">⏳ Pending</button>
+  <button class="filter-btn" onclick="setFilter('lc',this)">🟡 Has LeetCode</button>
+</div>
+
+<main id="main">
+  <div class="no-results" id="no-results">No questions match your search.</div>
+</main>
+
+<script>
+const ICONS = ["📊","📈","🔢","🔗","🌿","🔄","🔍","🏔️","📚","💬","🌲","🌳","🗃️","📐","⚡","🧩"];
+const DATA = [
+  { id:"654", name:"Arrays and Hashing", problems:[
+    { id:"a1",  name:"Next Permutation", lc:"https://leetcode.com/problems/next-permutation/" },
+    { id:"a2",  name:"3 Sum", lc:"https://leetcode.com/problems/3sum/" },
+    { id:"a3",  name:"Kadane's Algorithm (Maximum Subarray)", lc:"https://leetcode.com/problems/maximum-subarray/" },
+    { id:"a4",  name:"Majority Element-II", lc:"https://leetcode.com/problems/majority-element-ii/" },
+    { id:"a5",  name:"Count subarrays with given XOR K", lc:null },
+    { id:"a6",  name:"Find the repeating and missing number", lc:null },
+    { id:"a7",  name:"Count Inversions", lc:null },
+    { id:"a8",  name:"Maximum Product Subarray in an Array", lc:"https://leetcode.com/problems/maximum-product-subarray/" }
+  ]},
+  { id:"655", name:"Binary Search", problems:[
+    { id:"bs1", name:"Search in Rotated Sorted Array II", lc:"https://leetcode.com/problems/search-in-rotated-sorted-array-ii/" },
+    { id:"bs2", name:"Find Minimum in Rotated Sorted Array", lc:"https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" },
+    { id:"bs3", name:"Find Peak Element", lc:"https://leetcode.com/problems/find-peak-element/" },
+    { id:"bs4", name:"Koko Eating Bananas", lc:"https://leetcode.com/problems/koko-eating-bananas/" },
+    { id:"bs5", name:"Aggressive Cows", lc:null },
+    { id:"bs6", name:"Book Allocation Problem", lc:null },
+    { id:"bs7", name:"Median of 2 Sorted Arrays", lc:"https://leetcode.com/problems/median-of-two-sorted-arrays/" },
+    { id:"bs8", name:"Minimize Max Distance to Gas Station", lc:"https://leetcode.com/problems/minimize-max-distance-to-gas-station/" }
+  ]},
+  { id:"659", name:"Linked List", problems:[
+    { id:"ll1", name:"Middle of a LinkedList [Tortoise-Hare Method]", lc:"https://leetcode.com/problems/middle-of-the-linked-list/" },
+    { id:"ll2", name:"Detect a Loop in LL", lc:"https://leetcode.com/problems/linked-list-cycle/" },
+    { id:"ll3", name:"Remove Nth Node from the Back of the LL", lc:"https://leetcode.com/problems/remove-nth-node-from-end-of-list/" },
+    { id:"ll4", name:"Find the Intersection Point of Y LL", lc:"https://leetcode.com/problems/intersection-of-two-linked-lists/" },
+    { id:"ll5", name:"Sort Linked List", lc:"https://leetcode.com/problems/sort-list/" },
+    { id:"ll6", name:"Segregate Odd and Even Nodes in Linked List", lc:"https://leetcode.com/problems/odd-even-linked-list/" }
+  ]},
+  { id:"660", name:"Recursion and Backtracking", problems:[
+    { id:"rb1", name:"Power Set", lc:null },
+    { id:"rb2", name:"Combination Sum", lc:"https://leetcode.com/problems/combination-sum/" },
+    { id:"rb3", name:"N Queen", lc:"https://leetcode.com/problems/n-queens/" },
+    { id:"rb4", name:"Sudoku Solver", lc:"https://leetcode.com/problems/sudoku-solver/" },
+    { id:"rb5", name:"M Coloring Problem", lc:null },
+    { id:"rb6", name:"Word Search", lc:"https://leetcode.com/problems/word-search/" }
+  ]},
+  { id:"661", name:"Stacks / Queues", problems:[
+    { id:"sq1", name:"Next Greater Element", lc:"https://leetcode.com/problems/next-greater-element-i/" },
+    { id:"sq2", name:"Trapping Rainwater", lc:"https://leetcode.com/problems/trapping-rain-water/" },
+    { id:"sq3", name:"Largest Rectangle in a Histogram", lc:"https://leetcode.com/problems/largest-rectangle-in-histogram/" },
+    { id:"sq4", name:"Asteroid Collision", lc:"https://leetcode.com/problems/asteroid-collision/" },
+    { id:"sq5", name:"Sliding Window Maximum", lc:"https://leetcode.com/problems/sliding-window-maximum/" },
+    { id:"sq6", name:"LRU Cache", lc:"https://leetcode.com/problems/lru-cache/" }
+  ]},
+  { id:"658", name:"Heaps", problems:[
+    { id:"h1",  name:"K-th Largest Element in an Array", lc:"https://leetcode.com/problems/kth-largest-element-in-an-array/" },
+    { id:"h2",  name:"Task Scheduler", lc:"https://leetcode.com/problems/task-scheduler/" },
+    { id:"h3",  name:"Implement Min Heap", lc:null }
+  ]},
+  { id:"663", name:"Trees (BT + BST)", problems:[
+    { id:"t1",  name:"Diameter of Binary Tree", lc:"https://leetcode.com/problems/diameter-of-binary-tree/" },
+    { id:"t2",  name:"Maximum Path Sum", lc:"https://leetcode.com/problems/binary-tree-maximum-path-sum/" },
+    { id:"t3",  name:"Bottom View of BT", lc:null },
+    { id:"t4",  name:"LCA in BT", lc:"https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/" },
+    { id:"t5",  name:"Minimum Time to Burn the BT from a Given Node", lc:null },
+    { id:"t6",  name:"Construct BT from Preorder and Inorder", lc:"https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/" },
+    { id:"t7",  name:"Morris Preorder Traversal of a Binary Tree", lc:"https://leetcode.com/problems/binary-tree-inorder-traversal/" },
+    { id:"t8",  name:"Delete a Node in BST", lc:"https://leetcode.com/problems/delete-node-in-a-bst/" },
+    { id:"t9",  name:"LCA in BST", lc:"https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/" },
+    { id:"t10", name:"Two Sum In BST", lc:"https://leetcode.com/problems/two-sum-iv-input-is-a-bst/" },
+    { id:"t11", name:"Largest BST in Binary Tree", lc:"https://leetcode.com/problems/maximum-sum-bst-in-binary-tree/" }
+  ]},
+  { id:"657", name:"Graphs", problems:[
+    { id:"g1",  name:"Rotten Oranges", lc:"https://leetcode.com/problems/rotting-oranges/" },
+    { id:"g2",  name:"Word Ladder I", lc:"https://leetcode.com/problems/word-ladder/" },
+    { id:"g3",  name:"Number of Islands", lc:"https://leetcode.com/problems/number-of-islands/" },
+    { id:"g4",  name:"Course Schedule II", lc:"https://leetcode.com/problems/course-schedule-ii/" },
+    { id:"g5",  name:"Alien Dictionary", lc:"https://leetcode.com/problems/alien-dictionary/" },
+    { id:"g6",  name:"Dijkstra's Algorithm", lc:null },
+    { id:"g7",  name:"Cheapest Flights Within K Stops", lc:"https://leetcode.com/problems/cheapest-flights-within-k-stops/" },
+    { id:"g8",  name:"Bellman Ford Algorithm", lc:null },
+    { id:"g9",  name:"Floyd Warshall Algorithm", lc:null },
+    { id:"g10", name:"Find the MST Weight (Prim's)", lc:null },
+    { id:"g11", name:"Accounts Merge", lc:"https://leetcode.com/problems/accounts-merge/" },
+    { id:"g12", name:"Bridges in Graph", lc:"https://leetcode.com/problems/critical-connections-in-a-network/" }
+  ]},
+  { id:"656", name:"Dynamic Programming", problems:[
+    { id:"dp1", name:"Maximum Sum of Non-Adjacent Elements (House Robber)", lc:"https://leetcode.com/problems/house-robber/" },
+    { id:"dp2", name:"Ninja's Training", lc:null },
+    { id:"dp3", name:"Minimum Path Sum in Grid (DP-10)", lc:"https://leetcode.com/problems/minimum-path-sum/" },
+    { id:"dp4", name:"Subset Sum Equal to Target (DP-14)", lc:null },
+    { id:"dp5", name:"Assign Cookies", lc:"https://leetcode.com/problems/assign-cookies/" },
+    { id:"dp6", name:"Rod Cutting Problem (DP-24)", lc:null },
+    { id:"dp7", name:"Longest Common Subsequence", lc:"https://leetcode.com/problems/longest-common-subsequence/" },
+    { id:"dp8", name:"Longest Palindromic Subsequence", lc:"https://leetcode.com/problems/longest-palindromic-subsequence/" },
+    { id:"dp9", name:"Edit Distance", lc:"https://leetcode.com/problems/edit-distance/" },
+    { id:"dp10",name:"Best Time to Buy and Sell Stock IV", lc:"https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv/" },
+    { id:"dp11",name:"Longest Increasing Subsequence", lc:"https://leetcode.com/problems/longest-increasing-subsequence/" },
+    { id:"dp12",name:"Burst Balloons", lc:"https://leetcode.com/problems/burst-balloons/" }
+  ]},
+  { id:"664", name:"Tries", problems:[
+    { id:"tr1", name:"Trie Implementation and Advanced Operations", lc:"https://leetcode.com/problems/implement-trie-prefix-tree/" },
+    { id:"tr2", name:"Maximum XOR with an Element from an Array", lc:"https://leetcode.com/problems/maximum-xor-with-an-element-from-array/" },
+    { id:"tr3", name:"Number of Distinct Substrings in a String", lc:null }
+  ]},
+  { id:"662", name:"String", problems:[
+    { id:"s1",  name:"Minimum Bracket Reversals to Balance Expression", lc:"https://leetcode.com/problems/minimum-add-to-make-parentheses-valid/" },
+    { id:"s2",  name:"Rabin Karp Algorithm", lc:"https://leetcode.com/problems/repeated-string-match/" },
+    { id:"s3",  name:"Z Function", lc:null },
+    { id:"s4",  name:"KMP Algorithm / LPS Array", lc:"https://leetcode.com/problems/implement-strstr/" }
+  ]}
+];
+
+let activeFilter = 'all', searchTerm = '';
+const KEY_PREFIX = 'sde79_done_';
+function isDone(id) { return localStorage.getItem(KEY_PREFIX+id)==='1'; }
+function setDone(id,v) { v ? localStorage.setItem(KEY_PREFIX+id,'1') : localStorage.removeItem(KEY_PREFIX+id); }
+
+function buildUI() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  let total=0, done=0;
+  DATA.forEach((cat,ci) => {
+    let ct=0, cd=0;
+    cat.problems.forEach(p=>{ ct++; total++; if(isDone(p.id)){cd++;done++;} });
+    const el = document.createElement('div');
+    el.className='category'; el.id='cat-'+cat.id;
+    const header = document.createElement('div');
+    header.className='category-header';
+    header.innerHTML=`
+      <div class="cat-icon">${ICONS[ci%ICONS.length]}</div>
+      <div class="cat-title">${ci+1}. ${cat.name}</div>
+      <div class="cat-meta">
+        <span class="cat-progress" id="cprog-${cat.id}">${cd}/${ct}</span>
+        <div class="progress-bar"><div class="progress-fill" id="pfill-${cat.id}" style="width:${ct?Math.round(cd/ct*100):0}%"></div></div>
+        <span class="cat-arrow">▶</span>
+      </div>`;
+    header.onclick=()=>el.classList.toggle('open');
+    const body = document.createElement('div');
+    body.className='category-body';
+    cat.problems.forEach(p=>{
+      const row=document.createElement('div');
+      row.className='problem-row'+(isDone(p.id)?' done':'');
+      row.id='row-'+p.id; row.dataset.name=p.name.toLowerCase(); row.dataset.haslc=p.lc?'1':'0';
+      const check=document.createElement('div');
+      check.className='check-btn'+(isDone(p.id)?' checked':'');
+      check.onclick=e=>{e.stopPropagation();toggleDone(p.id,cat.id);};
+      const name=document.createElement('span');
+      name.className='problem-name'; name.textContent=p.name;
+      const lc=p.lc
+        ? Object.assign(document.createElement('a'),{href:p.lc,target:'_blank',rel:'noopener',className:'lc-link',innerHTML:'🟡 LeetCode'})
+        : Object.assign(document.createElement('span'),{className:'no-lc',textContent:'—'});
+      row.appendChild(check); row.appendChild(name); row.appendChild(lc);
+      body.appendChild(row);
+    });
+    el.appendChild(header); el.appendChild(body);
+    main.appendChild(el);
+  });
+  document.getElementById('total-count').textContent=total;
+  document.getElementById('done-count').textContent=done;
+  applyFilter();
+}
+
+function toggleDone(id,catId) {
+  const was=isDone(id); setDone(id,!was);
+  const row=document.getElementById('row-'+id);
+  const check=row.querySelector('.check-btn');
+  if(!was){row.classList.add('done');check.classList.add('checked');}
+  else{row.classList.remove('done');check.classList.remove('checked');}
+  updateCounts(); applyFilter();
+}
+
+function updateCounts() {
+  let total=0,done=0;
+  DATA.forEach(cat=>{
+    let ct=0,cd=0;
+    cat.problems.forEach(p=>{ct++;total++;if(isDone(p.id)){cd++;done++;}});
+    const fill=document.getElementById('pfill-'+cat.id);
+    if(fill) fill.style.width=(ct?Math.round(cd/ct*100):0)+'%';
+    const prog=document.getElementById('cprog-'+cat.id);
+    if(prog) prog.textContent=cd+'/'+ct;
+  });
+  document.getElementById('total-count').textContent=total;
+  document.getElementById('done-count').textContent=done;
+}
+
+function setFilter(f,btn) {
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); applyFilter();
+}
+
+function doSearch() { searchTerm=document.getElementById('searchBox').value.toLowerCase().trim(); applyFilter(); }
+
+function applyFilter() {
+  let any=false;
+  document.querySelectorAll('.problem-row').forEach(row=>{
+    const nm=row.dataset.name||'', lc=row.dataset.haslc==='1', dn=row.classList.contains('done');
+    let show=true;
+    if(searchTerm && !nm.includes(searchTerm)) show=false;
+    if(activeFilter==='done' && !dn) show=false;
+    if(activeFilter==='pending' && dn) show=false;
+    if(activeFilter==='lc' && !lc) show=false;
+    row.style.display=show?'':'none';
+    if(show) any=true;
+  });
+  document.getElementById('no-results').classList.toggle('show',!any&&(searchTerm||activeFilter!=='all'));
+}
+
+buildUI();
+</script>
+</body>
+</html>
